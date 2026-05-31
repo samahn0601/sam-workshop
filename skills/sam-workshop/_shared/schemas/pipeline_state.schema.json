@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sam-workshop/schemas/pipeline_state.schema.json",
+  "title": "Pipeline State (트리거 충돌 방지용 상태 머신)",
+  "type": "object",
+  "required": ["current_step", "mode"],
+  "properties": {
+    "current_step": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "mode": { "enum": ["workshop-mini", "standard", "deep-audit"] },
+    "target_language": { "enum": ["en", "ko", "ja", "mixed"] },
+    "article_type": { "type": "string" },
+    "audit_depth": { "enum": ["essential", "full_7layer"] },
+    "target_journal": { "type": "string" },
+    "last_self_gate": { "enum": ["A_design", "B_draft", "C_verify_critic", "D_finish", null] },
+    "last_skill_invoked": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": true
+}

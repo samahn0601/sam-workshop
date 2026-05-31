@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gate Plan",
+  "description": "단계별 HITL 운전 모드. 교수가 세션 시작 시 자연어로 선택하면 harness(Claude)가 작성하고, 각 step 종료 시 참조해 정지/자동을 결정한다. 위치: paper_home/.sam/hitl/gate_plan.json. 시각화는 _shared/templates/pipeline_map.md.",
+  "type": "object",
+  "required": ["preset", "dial", "steps", "medical_floor_override", "publication_ethics_floor", "soft_floor_steps"],
+  "additionalProperties": false,
+  "properties": {
+    "preset": {
+      "type": "string",
+      "enum": ["manual", "standard", "light", "full_auto", "custom"],
+      "description": "manual=H4(전 단계 정지), standard=H3(4 Self-Gate, 기본), light=H2, full_auto=H1(최종 검증만), custom=단계별 직접 지정"
+    },
+    "dial": {
+      "type": "string",
+      "enum": ["H4", "H3", "H2", "H1", "H0"],
+      "description": "기존 HITL Dial 매핑. H0(Sakana, 0-gate)는 의학 논문 제출용 비권장."
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "description": "8단계 파이프라인 각각의 정지/자동 설정. 순서 고정.",
+      "items": {
+        "type": "object",
+        "required": ["n", "name", "mode"],
+        "additionalProperties": false,
+        "properties": {
+          "n": {"type": "integer", "minimum": 1, "maximum": 8},
+          "name": {
+            "type": "string",
+            "enum": ["Idea Lock", "Deep Research", "Story & Outline", "Draft", "Verify", "Critic", "Humanize & Package", "Wrap & Next"]
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["auto", "review"],
+            "description": "auto=자동 통과(요약만), review=정지 후 사용자 승인/수정/계속 대기"
+          },
+          "locked_reason": {
+            "type": "string",
+            "description": "medical floor 등으로 mode가 review로 강제된 경우 사유. 없으면 생략."
+          }
+        }
+      }
+    },
+    "medical_floor_override": {
+      "type": "boolean",
+      "const": true,
+      "description": "항상 true. 약물 용량/제네릭, IRB·윤리·환자동의, 임상 가이드라인 변경, R6(mortality·safety·guideline claim) 감지 시 dial/preset과 무관하게 해당 step을 강제 review로. 풀 수 없음."
+    },
+    "publication_ethics_floor": {
+      "type": "boolean",
+      "const": true,
+      "description": "항상 true. AI 활용 공개문·authorship·이해상충(COI)·IRB/ethics statement·data availability·저널 정책 불일치 감지 시 dial/preset 무관 강제 review. 특히 ⑦ Package의 AI disclosure는 어떤 모드든 저자 확인 필수. 풀 수 없음."
+    },
+    "soft_floor_steps": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 1, "maximum": 8},
+      "default": [1, 7],
+      "description": "어떤 모드(custom/full_auto 포함)에서도 mode를 최소 review로 유지하는 단계. 기본 [1,7] — ① Idea Lock(교육: 첫 단추 저자 확정), ⑦ Package(윤리: AI 공개문·cover letter 저자 승인)."
+    },
+    "created": {"type": "string", "description": "ISO8601 생성 시각"},
+    "updated": {"type": "string", "description": "ISO8601 최종 변경 시각 (진행 중 모드 변경 시 갱신)"},
+    "notes": {"type": "string", "description": "본인 메모 (예: '이번엔 Methods가 약해서 ④⑤ 직접 본다')"}
+  },
+  "examples": [
+    {
+      "preset": "full_auto",
+      "dial": "H1",
+      "medical_floor_override": true,
+      "publication_ethics_floor": true,
+      "soft_floor_steps": [1, 7],
+      "steps": [
+        {"n": 1, "name": "Idea Lock", "mode": "review", "locked_reason": "soft floor (교육: 주제·저널 저자 확정)"},
+        {"n": 2, "name": "Deep Research", "mode": "auto"},
+        {"n": 3, "name": "Story & Outline", "mode": "auto"},
+        {"n": 4, "name": "Draft", "mode": "auto"},
+        {"n": 5, "name": "Verify", "mode": "auto"},
+        {"n": 6, "name": "Critic", "mode": "auto"},
+        {"n": 7, "name": "Humanize & Package", "mode": "review", "locked_reason": "soft floor + Publication Ethics (AI 공개문·cover letter 저자 확인)"},
+        {"n": 8, "name": "Wrap & Next", "mode": "auto"}
+      ],
+      "notes": "최종 집중: ①⑦만 저자 확인, 나머지는 정지 없이 진행. 약물/윤리 감지 시 자동 정차."
+    },
+    {
+      "preset": "custom",
+      "dial": "H3",
+      "medical_floor_override": true,
+      "publication_ethics_floor": true,
+      "soft_floor_steps": [1, 7],
+      "steps": [
+        {"n": 1, "name": "Idea Lock", "mode": "review", "locked_reason": "soft floor"},
+        {"n": 2, "name": "Deep Research", "mode": "auto"},
+        {"n": 3, "name": "Story & Outline", "mode": "review"},
+        {"n": 4, "name": "Draft", "mode": "auto"},
+        {"n": 5, "name": "Verify", "mode": "review"},
+        {"n": 6, "name": "Critic", "mode": "auto"},
+        {"n": 7, "name": "Humanize & Package", "mode": "review", "locked_reason": "soft floor + Publication Ethics"},
+        {"n": 8, "name": "Wrap & Next", "mode": "auto"}
+      ],
+      "notes": "커스텀: Story·Verify 직접 운전. ①⑦은 soft floor로 항상 저자 확인."
+    }
+  ]
+}

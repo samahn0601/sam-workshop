@@ -1,0 +1,19 @@
+{
+  "name": "samahn0601",
+  "owner": {
+    "name": "Sam Ahn (Sang Hyun Ahn, MD)",
+    "email": "admin@modoc-ai.com"
+  },
+  "metadata": {
+    "description": "Sam의 의대 단독저자 논문 작성 워크숍 plugin marketplace",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "sam-workshop",
+      "source": "./",
+      "description": "의대 단독저자 워크숍 17 skill pack — 8-step 파이프라인(journal-fit-check ~ hitl-dial-recommender), HITL 단계별 운전 모드(gate_plan), Medical Safety + Publication Ethics floor, reference 검증(R1-R6), hybrid LLM+AST compliance backend, self-deadline 체크리스트.",
+      "version": "1.3.1"
+    }
+  ]
+}

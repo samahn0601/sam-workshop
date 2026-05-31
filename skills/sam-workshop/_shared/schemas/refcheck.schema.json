@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sam-workshop/schemas/refcheck.schema.json",
+  "title": "Reference Check Result",
+  "type": "object",
+  "required": ["ref_id", "issue", "severity"],
+  "properties": {
+    "ref_id": { "type": "string" },
+    "doi": { "type": ["string", "null"] },
+    "pmid": { "type": ["string", "null"] },
+    "manuscript_text": { "type": "string", "description": "How reference is written in manuscript" },
+    "pubmed_metadata": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "authors": { "type": "array", "items": { "type": "string" } },
+        "year": { "type": "integer" },
+        "journal": { "type": "string" },
+        "publication_types": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "properties": {
+        "R1_doi_resolves": { "type": "boolean" },
+        "R2_title_match": { "type": "boolean" },
+        "R2_year_match": { "type": "boolean" },
+        "R2_authors_match": { "type": "boolean" },
+        "R2_journal_match": { "type": "boolean" },
+        "R3_orphan": { "type": "boolean", "description": "in reference list but not cited in text" },
+        "R3_ghost": { "type": "boolean", "description": "cited in text but not in reference list" },
+        "R4_chimera_risk": { "enum": ["none", "low", "medium", "high"] },
+        "R5_retracted": { "type": "boolean" },
+        "R6_paraphrase_verdict": {
+          "enum": ["supported", "partially_supported", "not_supported", "contradicted", "cannot_judge", "not_sampled"]
+        }
+      }
+    },
+    "issue": { "type": "string" },
+    "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+    "evidence_span": { "type": ["string", "null"] },
+    "recommended_action": {
+      "enum": ["keep", "revise_claim", "replace_citation", "add_citation", "check_full_text", "verify_metadata", "remove"]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sam-workshop/schemas/hitl_event.schema.json",
+  "title": "HITL Event",
+  "type": "object",
+  "required": ["ts", "paper_id", "step", "event_type"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "paper_id": { "type": "string" },
+    "step": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "gate": { "enum": ["A_design", "B_draft", "C_verify_critic", "D_finish"] },
+    "event_type": {
+      "enum": ["gate_pass", "gate_fail", "critique_decision", "model_strength", "hallucination", "human_override"]
+    },
+    "skill": { "type": "string" },
+    "engine": { "type": "string", "description": "claude | gpt-5.5 | gemini | code-script" },
+    "category": { "type": "string" },
+    "severity": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "description": { "type": "string" },
+    "action_taken": { "type": "string" },
+    "decision": { "enum": ["accepted", "rejected", "partial", "deferred", null] },
+    "time_to_fix_min": { "type": "number", "minimum": 0 },
+    "human_edit_level": { "enum": ["none", "low", "medium", "high"] },
+    "artifact": { "type": "string" }
+  },
+  "additionalProperties": true
+}

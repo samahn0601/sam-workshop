@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sam-workshop/schemas/paper_profile.schema.json",
+  "title": "Paper Profile (for hitl-dial-recommender)",
+  "type": "object",
+  "required": ["paper_id", "article_type"],
+  "properties": {
+    "paper_id": { "type": "string" },
+    "title": { "type": "string" },
+    "article_type": {
+      "enum": ["letter", "commentary", "case_report", "editorial", "viewpoint", "narrative_review", "systematic_review", "brief_report", "original_article", "reply_to_reviewer"]
+    },
+    "target_journal": { "type": "string" },
+    "target_journal_tier": { "enum": ["Q1", "Q2", "Q3", "Q4", "unknown"] },
+    "target_journal_if": { "type": ["number", "null"] },
+    "uses_patient_data": { "type": "boolean" },
+    "has_statistics": { "type": "boolean" },
+    "has_figures": { "type": "boolean" },
+    "reference_count": { "type": "integer", "minimum": 0 },
+    "novel_method": { "type": "boolean" },
+    "submission_intent": { "enum": ["journal_submission", "internal_review", "preprint", "draft_only"] },
+    "preferred_language": {
+      "enum": ["en", "ko", "ja", "other"],
+      "description": "Language of the manuscript itself (target journal language)."
+    },
+    "target_audience_language": {
+      "enum": ["en", "ko", "ja", "other"],
+      "description": "v1.2 NEW. Language of the workshop / item-bank audience. May differ from preferred_language: e.g. an English manuscript intended for an international journal authored by a Korean clinician-educator whose item bank will be used with Korean medical students. exam-item-builder consults this field rather than preferred_language. Defaults to preferred_language when omitted."
+    },
+    "author_role": { "enum": ["sole_author", "first_author", "corresponding_author", "co_author"] },
+    "previous_papers_with_pipeline": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": true
+}

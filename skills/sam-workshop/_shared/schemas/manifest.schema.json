@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sam-workshop/schemas/manifest.schema.json",
+  "title": "Paper Home Manifest",
+  "type": "object",
+  "required": ["schema_version", "paper_id", "current_manuscript", "history"],
+  "properties": {
+    "schema_version": { "const": "manifest-v1.1" },
+    "paper_id": { "type": "string" },
+    "current_manuscript": { "type": "string", "description": "relative path to latest versioned snapshot" },
+    "previous_version": { "type": ["string", "null"] },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["version", "path", "timestamp", "step"],
+        "properties": {
+          "version": { "type": "string", "pattern": "^v\\d+\\.\\d+(\\.\\d+)?(_[a-z0-9_]+)?$" },
+          "path": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "step": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "sha256": { "type": "string" },
+          "word_count": { "type": "integer" },
+          "changes_from_prev": { "type": "string" }
+        }
+      }
+    },
+    "locked_claims": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^C\\d{3,4}$" },
+      "description": "Claim IDs that must preserve meaning during humanize"
+    },
+    "locked_claims_meta": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" },
+          "type": {
+            "enum": ["mortality_outcome", "safety_claim", "guideline_changing",
+                     "drug_dose", "drug_contraindication", "primary_outcome",
+                     "effect_direction", "effect_size"]
+          },
+          "lock_reason": { "type": "string" },
+          "locked_at_step": { "type": "integer" },
+          "lock_check_status": { "enum": ["PENDING", "PASS", "DRIFT_DETECTED"] }
+        }
+      }
+    },
+    "last_gate": { "enum": ["A_design", "B_draft", "C_verify_critic", "D_finish", null] },
+    "last_skill": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}
