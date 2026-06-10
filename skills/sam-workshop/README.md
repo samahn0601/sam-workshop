@@ -1,7 +1,8 @@
-# Sam Workshop Skill Pack v1.4.0
+# Sam Workshop Skill Pack v1.4.1
 
 > 의대 교수 워크숍용 Claude Skill Pack (10:00–16:00, 5h 실습 + 1h 점심). 단계·시간 SSOT: `workshop/TIMETABLE.md` · `workshop/README.md`.
 > 단독저자 모드, Code 탭 중심, HITL Dial 4-gate supervised 표준 + Medical Floor circuit breaker.
+> v1.4.1 변경 (2026-06-10): **R5b Crossref retraction 교차** — `ref_verify_pubmed.py`에 `crossref_retraction_check()` 신설(`updates:DOI` 필터 + 제목 prefix). PMID 없는 비-MEDLINE 문헌도 DOI만으로 철회 확인, 확인 불가 시 `[R5B_UNCHECKED]`(fail-closed, PASS 집계 금지). 라이브 검증: Wakefield 1998 → retraction notice 2건 검출.
 > v1.4.0 변경 (17-skill 3AI 고도화 사이클 + 평평 설치, 2026-06-10): **Scope-Fit Gate**(journal-fit-check 1.3 — desk-reject 1차 방어선) + Fit verdict downstream 5곳 배선(desk-reject #1 승계·critic Editor·hitl guardrail·scorecard 차원7·story-design) · fail-closed/INCOMPLETE 패턴 6 skill + verify-reference Degraded Mode · RH1–RH4 개명 · CONSORT 2025/SPIRIT 2025/TRIPOD+AI 갱신 · 모델명 generic화 · 경로 anchor `${CLAUDE_SKILL_DIR}/../_shared`(**평평 설치 표준** — Desktop Code 탭 실측 검증, 우산 폴더 미탐지) · `hitl_recommend.py` Fit Verdict Guardrail 구현(회귀 12종).
 > v1.3.1 변경 (Tier 1 통합 + 3AI hotfix, 2026-05-03): compliance_backend.py 신규 — G1 abstract / G2 body word-count / G2.6 citation–reference integrity (deterministic). desk-reject-precheck·verify-reference-essential를 hybrid(LLM+AST) 백엔드로 분할, status 3등급(Pass / Fix before self-deadline / Human review required), hitl-dial-recommender self-deadline 5–7일 체크리스트 추가.
 > v1.2 변경 (reference run 결과 반영): Step 8b 시간 분할 (5+20), figure-prompt-eng matplotlib fallback renderer 추가, paper_profile.target_audience_language 필드 추가 (한국 청중 한국어 문항집 default), hitl_recommend.py H3/H4 floor 메시지 분리, revision_backlog.jsonl 표준 포맷 명문화.

@@ -78,6 +78,9 @@ class CheckResult:
     R3_ghost: Optional[bool] = None
     R4_chimera_risk: str = "none"  # none|low|medium|high
     R5_retracted: Optional[bool] = None
+    # v1.4.1 R5b: Crossref retraction 교차 — True=철회/공지 감지, False=없음 확인,
+    # None=확인 불가(네트워크 — unchecked, PASS 집계 금지)
+    R5b_crossref: Optional[bool] = None
     pubmed_title: Optional[str] = None
     pubmed_authors: List[str] = field(default_factory=list)
     pubmed_year: Optional[int] = None
@@ -366,6 +369,59 @@ def is_retracted(pubmed_meta: Dict[str, Any]) -> bool:
     return any(kw in title for kw in RETRACT_KEYWORDS)
 
 
+# ── v1.4.1 R5b: Crossref retraction 교차 (비-MEDLINE 갭 보조) ──
+# PubMed R5는 MEDLINE 색인 저널만 본다. CrossRef update 체계
+# (filter=updates:DOI → 이 DOI를 철회/갱신한 공지 검색)로 교차 확인.
+# fail-closed: 네트워크 실패는 None 반환 — 호출자는 [R5B_UNCHECKED]로
+# 표기하고 PASS로 집계 금지. Retraction Watch 전수 대조는 deep-audit 영역.
+
+CROSSREF_RETRACTION_TYPES = (
+    "retraction", "withdrawal", "removal",
+    "partial_retraction", "expression_of_concern",
+)
+
+
+def crossref_retraction_check(doi: str,
+                              crossref_meta: Optional[Dict[str, Any]] = None,
+                              ) -> Optional[Dict[str, Any]]:
+    """Returns {"flag": bool, "types": [...], "notices": [doi,...]} 또는
+    None(확인 불가 — unchecked로 처리할 것)."""
+    if not doi:
+        return None
+    types: List[str] = []
+    notices: List[str] = []
+
+    # 1차 (네트워크 0): R1에서 받은 메타 재사용 — 철회 시 제목에 prefix가 흔함
+    if crossref_meta:
+        title = ((crossref_meta.get("title") or [""])[0] or "").lower()
+        if title.startswith("retracted") or "retracted article" in title:
+            types.append("title_prefix")
+
+    # 2차: updates:DOI 필터 — 이 DOI를 대상으로 한 철회/갱신 공지 검색
+    url = f"{CROSSREF_API}?filter=updates:{urllib.parse.quote(doi, safe='')}&rows=5"
+    try:
+        data = json.loads(http_get(url, timeout=15))
+        for it in data.get("message", {}).get("items", []) or []:
+            for u in it.get("update-to", []) or []:
+                if (u.get("DOI") or "").lower() != doi.lower():
+                    continue
+                t = (u.get("type") or "").lower()
+                if t:
+                    types.append(t)
+                if it.get("DOI"):
+                    notices.append(it["DOI"])
+    except Exception:
+        if types:  # 제목 prefix만으로도 경고는 성립
+            return {"flag": True, "types": types, "notices": notices}
+        return None
+
+    flag = any(
+        t == "title_prefix" or t in CROSSREF_RETRACTION_TYPES or "retract" in t
+        for t in types
+    )
+    return {"flag": flag, "types": types, "notices": notices}
+
+
 # ============================================================
 # Main per-reference verification
 # ============================================================
@@ -435,6 +491,19 @@ def verify_reference(ref: Reference, email: str,
                 if res.R5_retracted:
                     issues.append("[RETRACTED] cited paper has been retracted")
 
+    # R5b (v1.4.1): Crossref retraction 교차 — PMID 유무와 무관 (비-MEDLINE 갭이 표적)
+    if ref.doi:
+        cr = crossref_retraction_check(ref.doi, crossref_meta)
+        if cr is None:
+            res.R5b_crossref = None
+            issues.append("[R5B_UNCHECKED] Crossref retraction 확인 불가(네트워크) — PASS 집계 금지")
+        elif cr["flag"]:
+            res.R5b_crossref = True
+            notice = f" notice={','.join(cr['notices'])}" if cr["notices"] else ""
+            issues.append(f"[RETRACTED_CROSSREF] type={','.join(cr['types'])}{notice}")
+        else:
+            res.R5b_crossref = False
+
     # R3: ghost/orphan
     orphan, ghost = ghost_orphan.get(ref.ref_id, (False, False))
     res.R3_orphan = orphan
@@ -460,7 +529,7 @@ def verify_reference(ref: Reference, email: str,
 
     res.issues = issues
     # severity
-    if any(s.startswith(("[RETRACTED]", "[CHIMERA_HIGH]", "[GHOST]", "[DOI_NOT_RESOLVED]")) for s in issues):
+    if any(s.startswith(("[RETRACTED]", "[RETRACTED_CROSSREF]", "[CHIMERA_HIGH]", "[GHOST]", "[DOI_NOT_RESOLVED]")) for s in issues):
         res.severity = "high"
     elif issues:
         res.severity = "medium"
@@ -563,7 +632,7 @@ def write_csv(results: List[CheckResult], path: Path) -> None:
         "ref_id", "doi", "pmid", "R1_doi_resolves",
         "R2_title_match", "R2_year_match", "R2_authors_match", "R2_journal_match",
         "R3_orphan", "R3_ghost", "R4_chimera_risk", "R5_retracted",
-        "severity", "issues",
+        "R5b_crossref", "severity", "issues",
     ]
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -574,7 +643,7 @@ def write_csv(results: List[CheckResult], path: Path) -> None:
                 r.R1_doi_resolves, r.R2_title_match, r.R2_year_match,
                 r.R2_authors_match, r.R2_journal_match,
                 r.R3_orphan, r.R3_ghost, r.R4_chimera_risk, r.R5_retracted,
-                r.severity, "; ".join(r.issues),
+                r.R5b_crossref, r.severity, "; ".join(r.issues),
             ])
 
 

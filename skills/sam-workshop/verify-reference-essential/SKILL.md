@@ -35,7 +35,7 @@ description: >
 | **R2** 메타 정합 | title/authors/year/journal 일치? | PubMed esummary + Crossref |
 | **R3** Ghost / Orphan | 본문↔reference list 상호 대응? | Script regex |
 | **R4** Citation chimera | DOI는 실재하나 다른 논문 메타 섞임? | metadata diff |
-| **R5** Retracted | 철회 논문 인용? | PubMed publication_type (MEDLINE 권위; 비-MEDLINE 철회는 한계 — Crossref update-to/Retraction Watch 보조 확인은 deep-audit에서) |
+| **R5** Retracted | 철회 논문 인용? | PubMed publication_type + **R5b Crossref update-to 교차**(v1.4.1 — 비-MEDLINE 갭 보조, PMID 없어도 DOI만으로 확인; 실패 시 `[R5B_UNCHECKED]` = PASS 집계 금지). Retraction Watch 전수 대조는 deep-audit |
 | **R6** Paraphrase fabrication | 인용 주장이 실제 abstract 지원? | abstract fetch + Claude semantic |
 
 ## 모드
