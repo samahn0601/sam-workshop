@@ -6,12 +6,12 @@ description: >
   meets its required items. Trigger when user says "reporting checklist", 
   "CONSORT STROBE", "보고지침", "study type 분류", "reporting guideline", or
   is auto-invoked by journal-fit-check / story-design / desk-reject-precheck.
-  Do not use for journal style guides (use journal-specs-fetch). Input:
+  Do not use for journal style guides (저널 author instructions는 공식 페이지에서 직접 확인 — 본 스킬 범위 밖). Input:
   paper_home/01_design/article_type.md + paper_home/04_draft/manuscript.md.
   Output: paper_home/08_package/reporting_checklist.md +
   reporting_checklist.pdf (when downloadable). Pipeline position: invoked
   automatically by journal-fit-check (Step 1) for routing, by
-  desk-reject-precheck (Step 8) for verification. Medical context: 의학 저널
+  desk-reject-precheck (Step 7 quick scan) for verification. Medical context: 의학 저널
   대다수가 reporting checklist 부착을 desk requirement로 함. Trigger keywords:
   reporting guideline, CONSORT, STROBE, CARE, PRISMA, TRIPOD, STARD, SPIRIT,
   보고지침, checklist.
@@ -23,20 +23,22 @@ description: >
 
 ## Routing Table
 
-| Study type | Guideline | URL |
+> **버전은 2026-06 기준 고정(pinned)** — 실행 시 EQUATOR·각 guideline 공식 사이트에서 **최신판·확장(extension) 존재를 확인**하고, 더 새 버전이 있으면 그쪽을 우선·표는 superseded로 표시.
+
+| Study type | Guideline | Canonical URL |
 |---|---|---|
-| Randomized controlled trial | **CONSORT 2010** | equator-network.org/reporting-guidelines/consort/ |
-| Observational (cohort/case-control/cross-sectional) | **STROBE** | strobe-statement.org |
-| Diagnostic accuracy | **STARD 2015** | equator-network.org/reporting-guidelines/stard/ |
-| Systematic review / meta-analysis | **PRISMA 2020** | prisma-statement.org |
-| Case report | **CARE** | care-statement.org |
-| Trial protocol | **SPIRIT 2013** | spirit-statement.org |
-| Prediction model (development/validation) | **TRIPOD** | tripod-statement.org |
-| Qualitative research | **SRQR** or **COREQ** | equator-network.org |
+| Randomized controlled trial | **CONSORT 2025** (2010 대체, 30-item) | consort-spirit.org |
+| Observational (cohort/case-control/cross-sectional) | **STROBE** (2007; RECORD·STROBE-MR 확장 후보) | strobe-statement.org |
+| Diagnostic accuracy | **STARD 2015 (v1.1)** | equator-network.org/reporting-guidelines/stard/ |
+| Systematic review / meta-analysis | **PRISMA 2020** (scoping이면 PRISMA-ScR) | prisma-statement.org |
+| Case report | **CARE** (2013) | care-statement.org |
+| Trial protocol | **SPIRIT 2025** (2013 대체) | consort-spirit.org |
+| Prediction model (development/validation) | **TRIPOD+AI** (TRIPOD-2015 공식 대체; LLM 연구는 TRIPOD-LLM 후보) | tripod-statement.org |
+| Qualitative research | **SRQR** (2014) or **COREQ** (2007) | equator-network.org |
 | Quality improvement | **SQUIRE 2.0** | squire-statement.org |
 | Animal preclinical | **ARRIVE 2.0** | arriveguidelines.org |
-| Economic evaluation | **CHEERS 2022** | equator-network.org |
-| AI in healthcare | **TRIPOD-AI / CONSORT-AI / SPIRIT-AI / DECIDE-AI** | equator-network.org |
+| Economic evaluation | **CHEERS 2022** (AI 중재는 CHEERS-AI 후보) | equator-network.org |
+| AI in healthcare | **TRIPOD+AI / CONSORT-AI / SPIRIT-AI / DECIDE-AI** (parent 2025판과 AI extension 병행 적용 여부는 실행 시 확인) | equator-network.org |
 
 ## 모드
 
@@ -124,4 +126,4 @@ description: >
 
 ## 다음 단계
 
-→ 본문 보강 → checklist PDF 부착 → desk-reject-precheck → package
+→ 본문 보강 → checklist PDF/파일 부착 → desk-reject-precheck (Step 7 quick scan) → Step 8 Wrap

@@ -7,14 +7,14 @@
 #   .\workshop\install\init-workshop-windows.ps1 -PaperName my_paper_2026
 #
 # What this does:
-#   1. Verify Claude Code plugin is installed (else print install hint and exit)
+#   1. Locate the skill pack (v1.4: flat install first) - warn-only if missing, never aborts
 #   2. Create paper_home/ folder structure (00_intake .. 08_package + .sam/{hitl,memory,logs})
 #   3. Drop a paper_profile.json template inside .sam/hitl/
 #   4. pip install python-docx (best effort, only if pip available)
 #   5. Run md_to_docx --preflight to verify environment
 #   6. Print next-step instructions
 #
-# Designed for Cowork-novice medical professors. Does NOT install Quarto/pandoc
+# Designed for medical professors new to Claude Desktop. Does NOT install Quarto/pandoc
 # — that should be done by participants BEFORE the workshop. If pandoc missing,
 # preflight will say so and the workshop falls back to "docx packaging as homework."
 
@@ -42,7 +42,10 @@ function Invoke-SamWorkshopInit {
     $PapersDir = Join-Path $env:USERPROFILE "papers"
     $PaperHome = Join-Path $PapersDir $PaperName
     $PluginBase = Join-Path $env:USERPROFILE ".claude\plugins\sam-workshop"
-    $SkillBaseFallback = Join-Path $env:USERPROFILE ".claude\skills\sam-workshop"
+    $LegacyUmbrella = Join-Path $env:USERPROFILE ".claude\skills\sam-workshop"
+    # v1.4: flat install is the workshop standard - 17 skills + _shared directly under .claude\skills\
+    $FlatProject = Join-Path (Get-Location).Path ".claude\skills"
+    $FlatGlobal = Join-Path $env:USERPROFILE ".claude\skills"
 
     function Write-Ok($msg)   { Write-Host "[OK]   $msg" -ForegroundColor Green }
     function Write-Warn2($msg) { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
@@ -54,26 +57,27 @@ function Invoke-SamWorkshopInit {
     Write-Host "  paper_home: $PaperHome"
     Write-Host "============================================================"
 
-    # 1. Locate the skill pack
+    # 1. Locate the skill pack - flat first; do NOT abort when missing (v1.4)
     $SkillBase = $null
     $PluginSkillPath = Join-Path $PluginBase "skills\sam-workshop"
-    if (Test-Path $PluginSkillPath -PathType Container) {
+    if (Test-Path (Join-Path $FlatProject "journal-fit-check\SKILL.md")) {
+        $SkillBase = $FlatProject
+        Write-Ok "Flat install detected (project): $SkillBase"
+    } elseif (Test-Path (Join-Path $FlatGlobal "journal-fit-check\SKILL.md")) {
+        $SkillBase = $FlatGlobal
+        Write-Ok "Flat install detected (global): $SkillBase"
+    } elseif (Test-Path $PluginSkillPath -PathType Container) {
         $SkillBase = $PluginSkillPath
-        Write-Ok "Plugin install detected: $SkillBase"
-    } elseif (Test-Path $SkillBaseFallback -PathType Container) {
-        $SkillBase = $SkillBaseFallback
-        Write-Ok "Manual install detected: $SkillBase"
+        Write-Ok "Plugin install detected (CLI/IDE): $SkillBase"
+    } elseif (Test-Path $LegacyUmbrella -PathType Container) {
+        $SkillBase = $LegacyUmbrella
+        Write-Warn2 "Umbrella copy detected: $LegacyUmbrella"
+        Write-Warn2 "Desktop Code tab does NOT detect this depth (2-level). Move the 17 skill"
+        Write-Warn2 "folders + _shared directly under .claude\skills\ (see INSTALL.md Fallback)."
     } else {
-        Write-Fail "sam-workshop skill pack not found in either:"
-        Write-Fail "    $PluginSkillPath"
-        Write-Fail "    $SkillBaseFallback"
-        Write-Host ""
-        Write-Host "Install first via Claude Code:"
-        Write-Host "    /plugin install sam-workshop@samahn0601"
-        Write-Host ""
-        Write-Host "Or manually clone the repo and copy:"
-        Write-Host "    Copy-Item -Recurse workshop\skills\sam-workshop `"`$env:USERPROFILE\.claude\skills\`""
-        return
+        Write-Warn2 "skill pack not found yet - paper_home will still be created."
+        Write-Warn2 "Install (workshop standard): open a Code tab session at paper_home, then run the INSTALL.md step 4 utterance."
+        Write-Dim  "  (CLI/IDE users: /plugin install sam-workshop@samahn0601)"
     }
 
     # 2. Create paper_home structure
@@ -163,8 +167,9 @@ function Invoke-SamWorkshopInit {
     # 6. Preflight
     Write-Host ""
     Write-Host "Step 3/4: md_to_docx 환경 검증 (--preflight)"
-    $PreflightScript = Join-Path $SkillBase "_shared\scripts\md_to_docx.py"
-    if (Test-Path $PreflightScript) {
+    $PreflightScript = $null
+    if ($SkillBase) { $PreflightScript = Join-Path $SkillBase "_shared\scripts\md_to_docx.py" }
+    if ($PreflightScript -and (Test-Path $PreflightScript)) {
         $env:PYTHONIOENCODING = "utf-8"
         $env:PYTHONUTF8 = "1"
         & $PyBin $PreflightScript --preflight
@@ -175,7 +180,8 @@ function Invoke-SamWorkshopInit {
             default { Write-Warn2 "Preflight reported blocking issues - facilitator will announce 'docx packaging as homework' fallback" }
         }
     } else {
-        Write-Fail "md_to_docx.py not found at $PreflightScript"
+        Write-Warn2 "md_to_docx.py not found (skill pack not installed yet?) - preflight skipped."
+        Write-Warn2 "Re-run this script after installing skills to verify the environment."
     }
 
     # 7. Next steps

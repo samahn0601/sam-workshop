@@ -7,7 +7,7 @@
 각 단계 종료 시 manuscript snapshot을 다음 명명으로 저장:
 
 ```
-04_draft/manuscript_v0.1_draft.md           ← Step 4 초고 (Cowork Live Artifact의 첫 snapshot)
+04_draft/manuscript_v0.1_draft.md           ← Step 4 초고 (Code 탭 작업본의 첫 snapshot)
 05_verify/manuscript_v0.2_verified.md        ← Step 5 verify 후 수정 반영
 06_critic/manuscript_v0.3_revised.md         ← Step 6 critic 채택 사항 반영
 08_package/manuscript_v0.4_humanized.md      ← Step 8 humanize 후

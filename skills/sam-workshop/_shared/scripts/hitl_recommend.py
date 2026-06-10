@@ -276,6 +276,97 @@ def apply_hard_guardrails(metrics: Dict[str, Any], profile: Dict[str, Any]) -> O
     return None
 
 
+# ============================================================
+# v1.4 — Fit Verdict Hard Guardrail (Scope-Fit / desk-reject 방어선)
+# ============================================================
+# SKILL.md hard guardrail 표 구현: journal_shortlist의 1차 저널 Fit verdict가
+# Risky/Mismatch이거나 scope 미확인인 상태에서 실제 투고 목표가 있으면
+# 최소 H3 + "Step 1 재정의 전 투고 금지 (C/D gate 필수)".
+# 배경: JAMIA #19 desk reject — 형식 게이트는 scope mismatch를 잡지 못한다.
+
+FIT_VERDICT_OK = ("strong", "possible")
+FIT_VERDICT_RISK = ("risky", "mismatch")
+
+
+def parse_fit_verdict(shortlist_path: Optional[Path]) -> Dict[str, Any]:
+    """journal_shortlist.md 표에서 1차 저널의 Fit verdict를 결정적으로 추출.
+
+    Returns:
+      {"status": "ok"|"unconfirmed"|"missing",
+       "verdict": "Strong"|"Possible"|"Risky"|"Mismatch"|None,
+       "journal": str|None}
+
+    - missing     : 파일 없음 (Step 1 journal-fit-check 미수행)
+    - unconfirmed : 파일은 있으나 verdict 칸이 비었거나 잠정/미확인/해석 불가
+    """
+    if not shortlist_path or not shortlist_path.exists():
+        return {"status": "missing", "verdict": None, "journal": None}
+
+    header = None
+    rows: List[List[str]] = []
+    for line in shortlist_path.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        low = [c.lower() for c in cells]
+        if header is None:
+            if any("verdict" in c for c in low):
+                header = low
+            continue
+        if all(set(c) <= set("-: ") for c in cells):  # |---|---| separator
+            continue
+        rows.append(cells)
+
+    if header is None or not rows:
+        return {"status": "unconfirmed", "verdict": None, "journal": None}
+
+    v_idx = next(i for i, c in enumerate(header) if "verdict" in c)
+    j_idx = next((i for i, c in enumerate(header)
+                  if "저널" in c or "journal" in c), None)
+
+    # 1차(1순위) 행 우선, 없으면 첫 데이터 행
+    row = next((r for r in rows
+                if r and ("1차" in r[0] or r[0].strip() in ("1", "1순위"))),
+               rows[0])
+    raw = row[v_idx].lower() if v_idx < len(row) else ""
+    journal = row[j_idx] if (j_idx is not None and j_idx < len(row)) else None
+
+    for v in ("mismatch", "risky", "possible", "strong"):
+        if v in raw:
+            return {"status": "ok", "verdict": v.capitalize(), "journal": journal}
+    return {"status": "unconfirmed", "verdict": None, "journal": journal}
+
+
+def apply_fit_verdict_guardrail(fit: Dict[str, Any],
+                                profile: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """v1.4 hard guardrail — 실제 투고 목표(submission_intent=journal_submission)일
+    때만 발동. fail-closed: verdict가 Strong/Possible로 *확인*된 경우에만 통과.
+
+    Returns None, 또는
+      {"min_dial": "H3", "reason": str, "submission_block": True, "note": str}
+    """
+    if profile.get("submission_intent") != "journal_submission":
+        return None
+
+    verdict = (fit.get("verdict") or "").lower()
+    if fit.get("status") == "ok" and verdict in FIT_VERDICT_OK:
+        return None
+
+    if fit.get("status") == "missing":
+        reason = "journal_shortlist.md 없음 — scope 미확인 (Step 1 journal-fit-check 미수행)"
+    elif fit.get("status") == "unconfirmed":
+        reason = "1차 저널 Fit verdict 미기록/잠정 — scope 미확인"
+    else:
+        reason = f"1차 저널({fit.get('journal') or '?'}) Fit verdict = {fit.get('verdict')}"
+    return {
+        "min_dial": "H3",
+        "reason": reason,
+        "submission_block": True,
+        "note": "Step 1 재정의(journal-fit-check 재실행) 전 투고 금지 — C/D gate 필수",
+    }
+
+
 def map_score_to_dial(score: float) -> str:
     if score >= 75:
         return "H4"
@@ -291,7 +382,9 @@ def map_score_to_dial(score: float) -> str:
 def render_report(profile: Dict[str, Any], metrics: Dict[str, Any],
                   risk_score: float, recommended_dial: str,
                   guardrail_min: Optional[str], rationale: List[str],
-                  floor_dial: Optional[str] = None) -> str:
+                  floor_dial: Optional[str] = None,
+                  fit: Optional[Dict[str, Any]] = None,
+                  fit_guard: Optional[Dict[str, Any]] = None) -> str:
     lines = [
         "# 🩺 HITL Dial 처방전 (Lab Report)",
         "",
@@ -309,6 +402,18 @@ def render_report(profile: Dict[str, Any], metrics: Dict[str, Any],
         f"| Gate fail | {metrics['n_gate_fail']} |",
         f"| Hallucinations | {metrics['n_hallucinations']} (severe {metrics['severe_hallucinations']}) |",
         f"| Critique accept rate | {metrics['critique_accept_rate']:.0%} |",
+    ]
+    if fit is not None:
+        if fit.get("status") == "ok":
+            fit_disp = str(fit.get("verdict"))
+            if fit.get("journal"):
+                fit_disp += f" ({fit['journal']})"
+        elif fit.get("status") == "missing":
+            fit_disp = "미확인 (journal_shortlist.md 없음)"
+        else:
+            fit_disp = "미확인 (verdict 미기록/잠정)"
+        lines.append(f"| 1차 저널 Fit verdict | {fit_disp} |")
+    lines += [
         "",
         "## Hallucination 분포",
         "",
@@ -334,6 +439,10 @@ def render_report(profile: Dict[str, Any], metrics: Dict[str, Any],
     lines.append(f"- Risk score 기반 ({risk_score:.1f}/100): {score_dial} ({DIAL_NAMES[score_dial]})")
     if guardrail_min:
         lines.append(f"- Legacy guardrail: 최소 {guardrail_min} ({DIAL_NAMES[guardrail_min]})")
+    if fit_guard:
+        lines.append(f"- 🚧 **Fit Verdict Guardrail (v1.4)**: 최소 {fit_guard['min_dial']} "
+                     f"({DIAL_NAMES[fit_guard['min_dial']]}) — {fit_guard['reason']}")
+        lines.append(f"  → ⛔ **{fit_guard['note']}**")
     lines.append(f"- **최종 권장 Dial: {recommended_dial} ({DIAL_NAMES[recommended_dial]})**")
     lines.append("")
     lines.append("## 사유")
@@ -355,7 +464,8 @@ def render_report(profile: Dict[str, Any], metrics: Dict[str, Any],
 def render_self_deadline_checklist(profile: Dict[str, Any],
                                     metrics: Dict[str, Any],
                                     events: List[Dict[str, Any]],
-                                    floor_dial: Optional[str]) -> str:
+                                    floor_dial: Optional[str],
+                                    fit_guard: Optional[Dict[str, Any]] = None) -> str:
     """v1.3 — 워크숍 wrap에서 산출하는 5–7일 자가-마감 체크리스트.
     `last_5min_checklist.py` 템플릿을 워크숍 의미로 재해석:
       - 본 파이프라인 last_5min: '제출 직전 5분 체크'
@@ -392,6 +502,12 @@ def render_self_deadline_checklist(profile: Dict[str, Any],
             "\n> 🟧 **Conservative Floor 발동 (Stage 2)**: "
             "보수 조건 (첫 파이프라인 / 실제 저널 투고 의도 등)으로 H3 최소. "
             "본 체크리스트 모든 항목 통과 권장.\n"
+        )
+    if fit_guard:
+        floor_banner += (
+            "\n> 🚧 **Fit Verdict Guardrail 발동 (v1.4)**: "
+            f"{fit_guard['reason']}. **{fit_guard['note']}** — "
+            "⑤ 투고 직전 단계로 가기 전에 Step 1 journal-fit-check를 재실행할 것.\n"
         )
 
     open_block = ""
@@ -472,6 +588,10 @@ def main() -> None:
                     help="v1.3: 워크숍 wrap 시 자가-마감 5–7일 체크리스트 출력 경로 "
                          "(예: paper_home/08_package/self_deadline_checklist.md). "
                          "지정 안 하면 생성 안 함.")
+    ap.add_argument("--shortlist", type=Path, default=None,
+                    help="v1.4: journal_shortlist.md 경로 (Fit Verdict Guardrail 입력). "
+                         "미지정 시 events 위치에서 paper_home/01_design/"
+                         "journal_shortlist.md 자동 추정.")
     args = ap.parse_args()
 
     events = load_events(args.events)
@@ -497,6 +617,19 @@ def main() -> None:
     guardrail_min = apply_hard_guardrails(metrics, profile)
 
     # ═══════════════════════════════════════════════════════════════
+    # v1.4: Fit Verdict Hard Guardrail (Scope-Fit / desk-reject 방어선)
+    # journal_shortlist 1차 Fit verdict가 Risky/Mismatch 또는 미확인 +
+    # 실제 투고 목표 → 최소 H3 + 투고 금지 노트
+    # ═══════════════════════════════════════════════════════════════
+    shortlist_path = args.shortlist
+    if shortlist_path is None:
+        # events = paper_home/.sam/hitl/events.jsonl → paper_home/01_design/
+        shortlist_path = (args.events.parent.parent.parent
+                          / "01_design" / "journal_shortlist.md")
+    fit = parse_fit_verdict(shortlist_path)
+    fit_guard = apply_fit_verdict_guardrail(fit, profile)
+
+    # ═══════════════════════════════════════════════════════════════
     # Stage 3: 최종 dial 결정
     # — floor가 발동하면 절대 그 아래로 못 내려감
     # — score, guardrail은 floor 위에서만 작동
@@ -507,6 +640,8 @@ def main() -> None:
         candidates.append(guardrail_min)
     if floor_dial:
         candidates.append(floor_dial)
+    if fit_guard:
+        candidates.append(fit_guard["min_dial"])
     # 가장 높은 (안전한) dial 선택
     recommended_dial = max(candidates, key=lambda d: dial_order.index(d))
 
@@ -538,18 +673,27 @@ def main() -> None:
         rationale.append("첫/두번째 파이프라인 사용 — 표준 4-gate 유지 권장")
     if profile.get("submission_intent") == "journal_submission":
         rationale.append("실제 저널 투고 목표 — 안전 우선")
+    if fit_guard:
+        rationale.append(
+            f"🚧 **Fit Verdict Guardrail (v1.4) 발동 → 최소 {fit_guard['min_dial']}**: "
+            f"{fit_guard['reason']}. {fit_guard['note']}."
+        )
     if not rationale:
         rationale.append("이벤트 부족 — 더 많은 데이터 누적 후 재계산 권고")
 
     report = render_report(profile, metrics, risk_score, recommended_dial,
-                            guardrail_min, rationale, floor_dial=floor_dial)
+                            guardrail_min, rationale, floor_dial=floor_dial,
+                            fit=fit, fit_guard=fit_guard)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(report, encoding="utf-8")
-    print(f"[dial] floor={floor_dial or '-'} score={risk_score:.1f}/{score_dial} -> {recommended_dial} -> {args.out}")
+    fit_disp = fit.get("verdict") or fit.get("status")
+    print(f"[dial] floor={floor_dial or '-'} fit={fit_disp} "
+          f"score={risk_score:.1f}/{score_dial} -> {recommended_dial} -> {args.out}")
 
     # v1.3: self-deadline 5–7일 체크리스트 (--self-deadline-out 지정 시)
     if args.self_deadline_out:
-        checklist = render_self_deadline_checklist(profile, metrics, events, floor_dial)
+        checklist = render_self_deadline_checklist(profile, metrics, events, floor_dial,
+                                                   fit_guard=fit_guard)
         args.self_deadline_out.parent.mkdir(parents=True, exist_ok=True)
         args.self_deadline_out.write_text(checklist, encoding="utf-8")
         print(f"[self-deadline] -> {args.self_deadline_out}")

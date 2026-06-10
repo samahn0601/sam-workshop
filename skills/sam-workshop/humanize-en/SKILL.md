@@ -5,21 +5,26 @@ description: >
   assistance: remove AI-signature vocabulary, vary sentence rhythm, retain
   scientific accuracy and journal style. Trigger when user says "humanize",
   "AI 시그니처 제거", "문체 다듬기", "natural English", "remove AI markers",
-  "ESL 자연화", "휴머나이즈", or operates in Step 8 of sam-workshop pipeline
-  (English manuscripts only). Do not invent data, results, p-values, citations,
+  "ESL 자연화", "휴머나이즈", or operates in Step 7 (Humanize & Package) of
+  sam-workshop pipeline (English manuscripts only). Do not invent data, results, p-values, citations,
   or change effect direction. Use humanize-ko for Korean manuscripts. Input:
-  paper_home/04_draft/manuscript.md (English). Output: in-place edit + optional
+  paper_home/04_draft/manuscript.md (English) +
+  paper_home/06_critic/revision_backlog.jsonl (accepted:true only). Output: in-place edit + optional
   paper_home/04_draft/manuscript_versions/manuscript_humanized_v{N}.md.
-  Pipeline position: sam-workshop Step 8. Medical context: ICMJE compliance,
+  Pipeline position: sam-workshop Step 7. Medical context: ICMJE compliance,
   ESL-aware (non-native English author), journal-specific style overrides
-  default. Mandatory after critic-multi-persona, before package-docx. Trigger
+  default. Mandatory after critic-multi-persona, before desk-reject-precheck. Trigger
   keywords: humanize, AI signature, Moreover, Furthermore, delve, leverage,
   자연스럽게, 문체, 영어, polish.
 ---
 
-# humanize-en (Step 8)
+# humanize-en (Step 7 — Humanize & Package)
 
 > AI가 쓴 영문 manuscript를 인간 학자가 쓴 것처럼 다듬되, **과학적 정확성·저널 스타일은 절대 깨지 않는다.** Sam pipeline의 humanize-en-v4.1 기반 + 워크숍 단순화.
+
+## 윤리 원칙 (Ethical framing)
+
+이 스킬은 의미를 보존하면서 문장 흐름·자연스러움을 개선하는 도구다. **AI 사용 사실을 숨기거나 AI 탐지를 회피하기 위한 용도가 아니다.** 원고 준비에 AI를 사용했다면 대상 저널 정책에 따라 cover letter·원고 내 적절한 위치에 공개한다(ICMJE). 정확성·독창성·인용·최종 문구의 책임은 인간 저자에게 있다.
 
 ## Non-Negotiables (8 절대 규칙)
 
@@ -32,9 +37,9 @@ description: >
 7. **Citations not provided → `[ADD: citation(s)]`.** Don't fabricate.
 8. **Accuracy wins** when stylistic rule conflicts with science or journal convention.
 
-## AI Signature Blacklist (필수 제거)
+## AI Signature Blacklist
 
-다음 어휘/패턴 발견 시 → 자연 영어로 교체:
+다음 어휘/패턴 발견 시 → 자연 영어로 교체. **기계적 전면 삭제 금지** — 문맥상 불필요·과장된 경우에 평이한 동의어로 대체(과교정은 오히려 어색):
 
 **어휘**
 - Moreover, Furthermore, Additionally, In addition (start of paragraph)
@@ -87,6 +92,7 @@ description: >
 
 - `paper_home/04_draft/manuscript.md` (English)
 - `paper_home/01_design/journal_shortlist.md` (저널 style 반영)
+- `paper_home/06_critic/revision_backlog.jsonl` — **accepted:true 항목만 반영** (비승인 항목 반영 금지 — Step 6 선별 우회 방지; 포맷 위반 시 `revision_backlog_format_invalid` HITL emit)
 
 ## 절차 (workshop-mini, 15분)
 
@@ -123,14 +129,19 @@ Methods/Results는 면제.
 수정 사항 list.
 ```
 
-### Step 4 (2분) — Self-Gate D pre-check
+### Step 4 (2분) — Post-humanize drift check + Self-Gate D pre-check
 
 ```
-Final pass: 다음 항목 확인
-- AI signature 어휘 0건
-- [ADD: ...] 미해결 0건 (또는 본인 결정 표시)
-- Effect direction 변경 0건
-- 종합 가독성: 인간 학자가 쓴 것 같은가?
+Drift check (diff에 잡힌 변경 문장만 — 전체 원고 재검증 금지):
+1. humanize_diff.md의 각 변경을 태깅: style-only / claim-touching / uncertain
+2. claim-touching·uncertain만 대조:
+   - 수치·p·CI·효과방향 → 원문과 Δ check (필요 시 stats-consistency)
+   - 인용 문장 → verify-reference-essential R6 spot 재확인
+   - revision_backlog accepted:true 항목과 일치 여부
+3. drift 의심 1건이라도 → 해당 문장 원문으로 롤백 + diff에 기록
+
+Final pass: AI signature 잔존 0건 / [ADD: ...] 해결 / Effect direction 변경 0건 /
+종합 가독성: 인간 학자가 쓴 것 같은가?
 ```
 
 ## Output 표준
@@ -152,7 +163,7 @@ In-place edit `manuscript.md`. 추가:
 ## HITL Event Emit
 
 ```json
-{"ts":"...","step":8,"gate":"D_finish","event_type":"gate_pass","skill":"humanize-en","engine":"claude","category":"humanize","severity":1,"description":"AI signatures removed: 12 instances. Sentence rhythm pass: 3 paragraphs rewritten.","time_to_fix_min":15}
+{"ts":"...","step":7,"gate":"D_finish","event_type":"gate_pass","skill":"humanize-en","engine":"claude","category":"humanize","severity":1,"description":"AI signatures removed: 12 instances. Sentence rhythm pass: 3 paragraphs rewritten.","time_to_fix_min":15}
 ```
 
 ## 결정적 vs LLM 분리
@@ -222,4 +233,4 @@ participants over 12 months. Final assessment was completed by 268 patients
 
 ## 다음 단계
 
-→ verify-post-humanize-mini (humanize 후 R6 재검증) → desk-reject-precheck → package-docx
+→ Step 4의 drift check 완료 → desk-reject-precheck (Step 7 quick scan) → Step 8 Wrap & Next

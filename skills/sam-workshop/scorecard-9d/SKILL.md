@@ -9,15 +9,16 @@ description: >
   comparison", "점수 비교", or operates in Step 6 of sam-workshop pipeline.
   Pairs with critic-multi-persona for combined critique-and-score exercise. Do
   not use for desk-rejection precheck (use desk-reject-precheck) or final
-  packaging (use package-docx). Input: paper_home/04_draft/manuscript.md (and
-  prior version if comparing). Output: paper_home/06_critic/scorecard_9d.md.
-  Pipeline position: sam-workshop Step 6 / Self-Gate C, optionally Step 8 final.
+  packaging (use the Step 7 packaging flow). Input: paper_home/04_draft/manuscript.md (and
+  prior version if comparing + journal_shortlist.md for dimension 7). Output: paper_home/06_critic/scorecard_9d.md.
+  Pipeline position: sam-workshop Step 6 / Self-Gate C, optional re-score at
+  D_finish (after Step 7, before submission).
   Medical context: ICMJE-aligned dimensions, KAMJE peer-review aligned scoring,
   reward-hacking detection through dimension-by-dimension diff. Trigger keywords:
   scorecard, 점수표, 9차원, 평가, score, dimension, version diff, 점수 비교.
 ---
 
-# scorecard-9d (Step 6, optional Step 8)
+# scorecard-9d (Step 6, optional 투고 직전 re-score)
 
 > 9차원 정량 평가. v1 → v2 → v3 진행 시 차원별 변화 추적 (Score-Driven Revert 감지). critic-multi-persona와 자주 묶어 운영.
 
@@ -59,7 +60,9 @@ description: >
 
 - **Self-Gate A2 (Step 3 후)**: 차원 7 (저널 적합성) ≥ 3
 - **Self-Gate C (Step 6 후)**: 종합 ≥ 32/40 + 차원 ≤ 2 = 0건 + 차원 9 = Pass
-- **Self-Gate D (Step 8 후)**: 종합 ≥ 36/40 + 차원 9 = Pass
+- **Self-Gate D_finish (Step 7 후, 투고 직전 re-score)**: 종합 ≥ 36/40 + 차원 9 = Pass
+
+> 차원 7 (저널 적합성)은 `journal_shortlist.md`의 **Scope fit·Fit verdict·Reject risk를 필수 참조** — "Reject risk를 상쇄할 논리가 draft에 있는가"를 본다 (Step 1 Scope-Fit Gate의 downstream 반영).
 
 ## 입력
 
@@ -70,7 +73,7 @@ description: >
 
 ### Step 1: 9차원 채점
 
-Cowork에서:
+Code 탭에서:
 ```
 당신은 Area Chair입니다. 첨부 manuscript.md를 9차원에서 채점하세요.
 
@@ -158,7 +161,7 @@ v1 vs v2 비교:
 - [ ] 차원 9 = Pass
 - [ ] Score-Driven Revert 미발동 (또는 본인 ratify)
 
-### Self-Gate D (Step 8)
+### Self-Gate D_finish (Step 7 후 · 투고 직전 re-score)
 - [ ] 종합 ≥ 36
 - [ ] 차원 9 = Pass
 - [ ] 차원 8 ≥ 4 (Humanness 안정)

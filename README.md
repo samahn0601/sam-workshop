@@ -99,22 +99,14 @@ workshop/
 - [ ] (사후) 한국 의대 교수 자주 투고 저널 5–10개 specs 사전 정비
 - [ ] (v2 후속) `exam-item-generator` skill 별도 분리
 
-## 빠른 시작
+## 빠른 시작 (Desktop Code 탭 · 평평 설치 — 2026-06-10 실측 검증)
 
-```bash
-# 설치
-cp -R skills/sam-workshop ~/.claude/skills/
+1. Code 탭 통합 터미널에서 paper_home 생성: `install/init-workshop-{mac.sh,windows.ps1}`
+2. Code 탭 **새 세션** → 작업 폴더 = paper_home
+3. 설치 발화 한 줄 붙여넣기: *"sam-workshop repo를 clone해서 skills/sam-workshop 안의 17개 skill 폴더와 `_shared`를 지금 작업 폴더의 `.claude/skills/` 바로 아래로 복사해줘 (우산 폴더 금지 — 1단계)"*
+4. **새 세션 1회** → `/` 목록에 17개 확인 → 첫 발화: `"내 논문 어느 저널에 투고할까?"`
 
-# 본인 논문 폴더 생성
-mkdir -p ~/papers/test_paper/{00_intake,01_design,02_research,03_outline,04_draft,05_verify,06_critic,07_figures,08_package}
-mkdir -p ~/papers/test_paper/.sam/{hitl,memory,logs}
-
-# Code 탭에서 paper_home 폴더로 세션 열기, instructions(CLAUDE.md) 적용
-
-# 자연어로 첫 발화:
-# "내 논문 어느 저널에 투고할까?"
-# → journal-fit-check 자동 발화
-```
+⚠️ Code 탭 skill 탐지는 `.claude/skills/<skill>/SKILL.md` **1단계만** 인식 — `cp -R skills/sam-workshop ~/.claude/skills/` 같은 **우산 복사는 17개 전부 미탐지**(실측). 반드시 평평하게.
 
 자세한 설치/검증: `INSTALL.md`. Skill Pack 사용법: `skills/sam-workshop/README.md`.
 

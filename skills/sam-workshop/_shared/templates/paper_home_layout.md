@@ -1,6 +1,6 @@
 # `paper_home/` 표준 레이아웃
 
-모든 sam-workshop skill은 다음 폴더 구조를 가정한다. Cowork project 1개 = 1 논문 = `paper_home/` 1개.
+모든 sam-workshop skill은 다음 폴더 구조를 가정한다. Code 탭 작업 폴더 1개 = 1 논문 = `paper_home/` 1개.
 
 ```
 paper_home/
@@ -77,12 +77,12 @@ paper_home/
         └── skill_runs.jsonl
 ```
 
-## Cowork Project 설정
+## Code 탭 작업 폴더 설정
 
 1. 로컬 폴더 1개 생성: 위 구조
-2. Cowork에서 Project 만들 때 이 폴더를 Context로 등록
-3. `manuscript.md`를 Live Artifact로 지정
-4. Project Instructions: `_shared/templates/cowork_project_instructions.md` 복붙
+2. Claude Desktop Code 탭에서 이 폴더를 작업 폴더로 연다
+3. `manuscript.md`를 메인 작업 파일로 둔다
+4. Project Instructions: `_shared/templates/project_instructions.md` 내용을 폴더의 `CLAUDE.md`로 저장(또는 세션 instructions에 붙여넣기)
 
 ## Skill의 폴더 접근 규약
 

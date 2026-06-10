@@ -7,14 +7,14 @@
 #   bash workshop/install/init-workshop-mac.sh my_paper_2026
 #
 # What this does:
-#   1. Verify Claude Code plugin is installed (else print install hint and exit)
+#   1. Locate the skill pack (v1.4: flat install first) — warn-only if missing, never aborts
 #   2. Create paper_home/ folder structure (00_intake .. 08_package + .sam/{hitl,memory,logs})
 #   3. Drop a paper_profile.json template inside .sam/hitl/
 #   4. pip install python-docx (best effort, only if pip available)
 #   5. Run md_to_docx --preflight to verify environment
 #   6. Print next-step instructions
 #
-# Designed for Cowork-novice medical professors. Does NOT install Quarto/pandoc
+# Designed for medical professors new to Claude Desktop. Does NOT install Quarto/pandoc
 # — that should be done by participants BEFORE the workshop using the pre-mail
 # instructions (Quarto installer link). If pandoc missing, preflight will say so
 # and the workshop falls back to "docx packaging as homework."
@@ -25,7 +25,10 @@ PAPER_NAME="${1:-my_paper_$(date +%Y%m%d)}"
 PAPERS_DIR="${HOME}/papers"
 PAPER_HOME="${PAPERS_DIR}/${PAPER_NAME}"
 PLUGIN_BASE="${HOME}/.claude/plugins/sam-workshop"
-SKILL_BASE_FALLBACK="${HOME}/.claude/skills/sam-workshop"
+LEGACY_UMBRELLA="${HOME}/.claude/skills/sam-workshop"
+# v1.4: 평평(flat) 설치가 워크숍 표준 — 17 skill + _shared가 .claude/skills/ 바로 아래
+FLAT_PROJECT="${PWD}/.claude/skills"
+FLAT_GLOBAL="${HOME}/.claude/skills"
 
 # Color helpers (fall back to plain if not a TTY)
 if [[ -t 1 ]]; then
@@ -43,25 +46,26 @@ echo "  sam-workshop init (Mac/Linux)"
 echo "  paper_home: ${PAPER_HOME}"
 echo "============================================================"
 
-# 1. Locate the skill pack (plugin install path or manual fallback)
+# 1. Locate the skill pack — flat(평평) 우선, 미설치여도 중단하지 않음 (v1.4)
 SKILL_BASE=""
-if [[ -d "${PLUGIN_BASE}/skills/sam-workshop" ]]; then
+if [[ -f "${FLAT_PROJECT}/journal-fit-check/SKILL.md" ]]; then
+  SKILL_BASE="${FLAT_PROJECT}"
+  ok "Flat install detected (project): ${SKILL_BASE}"
+elif [[ -f "${FLAT_GLOBAL}/journal-fit-check/SKILL.md" ]]; then
+  SKILL_BASE="${FLAT_GLOBAL}"
+  ok "Flat install detected (global): ${SKILL_BASE}"
+elif [[ -d "${PLUGIN_BASE}/skills/sam-workshop" ]]; then
   SKILL_BASE="${PLUGIN_BASE}/skills/sam-workshop"
-  ok "Plugin install detected: ${SKILL_BASE}"
-elif [[ -d "${SKILL_BASE_FALLBACK}" ]]; then
-  SKILL_BASE="${SKILL_BASE_FALLBACK}"
-  ok "Manual install detected: ${SKILL_BASE}"
+  ok "Plugin install detected (CLI/IDE): ${SKILL_BASE}"
+elif [[ -d "${LEGACY_UMBRELLA}" ]]; then
+  SKILL_BASE="${LEGACY_UMBRELLA}"
+  warn "Umbrella copy detected: ${LEGACY_UMBRELLA}"
+  warn "Desktop Code 탭은 이 깊이(2단계)를 탐지하지 못한다 — 안의 17개 skill 폴더와"
+  warn "_shared를 .claude/skills/ 바로 아래로 옮길 것 (INSTALL.md Fallback 참조)."
 else
-  fail "sam-workshop skill pack not found in either:"
-  fail "    ${PLUGIN_BASE}/skills/sam-workshop"
-  fail "    ${SKILL_BASE_FALLBACK}"
-  echo
-  echo "Install first via Claude Code:"
-  echo "    /plugin install sam-workshop@samahn0601"
-  echo
-  echo "Or manually clone the repo and copy:"
-  echo "    cp -R workshop/skills/sam-workshop ~/.claude/skills/"
-  exit 1
+  warn "skill pack이 아직 안 보인다 — paper_home은 계속 생성한다."
+  warn "설치(워크숍 표준): Code 탭에서 paper_home으로 세션을 연 뒤 INSTALL.md ④ 설치 발화문 실행."
+  dim  "  (CLI/IDE 사용자: /plugin install sam-workshop@samahn0601)"
 fi
 
 # 2. Create paper_home structure
@@ -142,7 +146,8 @@ if [[ -f "${PREFLIGHT_SCRIPT}" ]]; then
     *) warn "Preflight reported blocking issues — facilitator will announce 'docx packaging as homework' fallback";;
   esac
 else
-  fail "md_to_docx.py not found at ${PREFLIGHT_SCRIPT}"
+  warn "md_to_docx.py not found (skill pack 미설치?) — preflight 생략."
+  warn "skill 설치 후 본 스크립트를 다시 실행하면 preflight까지 검증된다."
 fi
 
 # 7. Print next-step instructions

@@ -1,6 +1,6 @@
 {
   "name": "sam-workshop",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "의대 단독저자 6h 워크숍용 17 skill pack — desk-reject precheck, reference verification (R1-R6), HITL dial recommender, hybrid LLM+AST compliance backend (G1/G2/G2.6), Medical Floor STOP, self-deadline 5-7d checklist, G5 facilitator-run docx packaging.",
   "author": {
     "name": "Sam Ahn",

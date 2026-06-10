@@ -31,11 +31,11 @@ description: >
 
 | Layer | 목적 | 도구 |
 |---|---|---|
-| **R1** DOI 실재 | DOI가 실제 존재? | Crossref API |
+| **R1** DOI 실재 | DOI가 실제 존재? | Crossref API (비-Crossref DOI — 예: DataCite — 는 doi.org resolve로 수동 확인) |
 | **R2** 메타 정합 | title/authors/year/journal 일치? | PubMed esummary + Crossref |
 | **R3** Ghost / Orphan | 본문↔reference list 상호 대응? | Script regex |
 | **R4** Citation chimera | DOI는 실재하나 다른 논문 메타 섞임? | metadata diff |
-| **R5** Retracted | 철회 논문 인용? | PubMed publication_type |
+| **R5** Retracted | 철회 논문 인용? | PubMed publication_type (MEDLINE 권위; 비-MEDLINE 철회는 한계 — Crossref update-to/Retraction Watch 보조 확인은 deep-audit에서) |
 | **R6** Paraphrase fabrication | 인용 주장이 실제 abstract 지원? | abstract fetch + Claude semantic |
 
 ## 모드
@@ -50,19 +50,21 @@ description: >
 
 ## 입력
 
-- `paper_home/04_draft/manuscript.md` (또는 `.docx`)
+- `paper_home/04_draft/manuscript.md` — **workshop-mini는 `.md` 우선.** `.docx`만 있으면 먼저 `.md`로 변환(Claude가 수행, 원본 `.docx`는 읽기 전용 보존) 후 실행 — 변환 실패 시 R3·R6는 `INCOMPLETE`
 - `paper_home/04_draft/references.txt` (또는 `.bib`)
 
 ## 절차 (workshop-mini, 30분)
 
-### Phase 1 (3분) — 파일 위치 + 검사 범위 지정
+### Phase 1 (3분) — Preflight: 파일·환경·이메일
 
 ```bash
 ls paper_home/04_draft/
-# manuscript.md, references.txt 확인
+# manuscript.md, references.txt 확인 (paper_home이 안 보이면 위치부터 탐색·조정)
+python --version
+# Python 3.9+ 확인 + ${CLAUDE_SKILL_DIR}/../_shared/scripts/ 에 스크립트 존재 확인
 ```
 
-본인 이메일 (PubMed E-utilities tool 식별 필수) 입력.
+연락 가능한 이메일 입력 (NCBI E-utilities `tool/email` 식별용 스크립트 인자 — 아래 Phase 2b에서 **이 값으로 치환**해 실행, 더미 예시 그대로 실행 금지).
 
 ### Phase 2 (10분) — R1–R5 자동 검사 (Code Phase)
 
@@ -71,10 +73,12 @@ ls paper_home/04_draft/
 `ref_verify_pubmed.py`도 R3을 검사하지만, v1.3에서 **bracket-range 확장 + ref list `N.` 정규식**까지 강화한 결정적 백엔드를 추가로 호출:
 
 ```bash
-python skills/sam-workshop/_shared/scripts/compliance_backend.py citation-integrity \
+python ${CLAUDE_SKILL_DIR}/../_shared/scripts/compliance_backend.py citation-integrity \
   --manuscript paper_home/04_draft/manuscript.md \
   --refs       paper_home/04_draft/references.txt
 ```
+
+> 경로 규칙: 공유 스크립트는 **이 스킬 폴더의 형제 폴더 `_shared`** 에 있다 (`${CLAUDE_SKILL_DIR}` = 이 SKILL.md가 있는 폴더). 셸(특히 PowerShell)이 이 변수를 자동 확장하지 않을 수 있으므로 **Claude가 실제 절대경로로 치환해 실행**한다. 절대경로·홈(`~`)·repo root·`sam-workshop` 우산 폴더 가정 금지.
 
 JSON 산출:
 ```json
@@ -91,13 +95,15 @@ JSON 산출:
 #### Phase 2b (9분) — R1, R2, R4, R5 + R3 LLM cross-check (PubMed)
 
 ```bash
-python ~/.claude/skills/sam-workshop/_shared/scripts/ref_verify_pubmed.py \
+python ${CLAUDE_SKILL_DIR}/../_shared/scripts/ref_verify_pubmed.py \
   --manuscript paper_home/04_draft/manuscript.md \
   --references paper_home/04_draft/references.txt \
-  --email YOUR_EMAIL@example.com \
+  --email <Phase 1에서 받은 이메일> \
   --r6-sample 8 \
   --out paper_home/05_verify/
 ```
+
+> 단체 실습 주의: 같은 회장 IP에서 다수가 동시 실행하면 NCBI/Crossref가 429(rate limit)를 줄 수 있다 (API key 없는 E-utilities는 3 req/s). 실패 시 재시도는 1회만, 간격을 두고 — 지속되면 아래 **Degraded Mode**로.
 
 산출:
 - `refcheck_refs.csv` — 전체 reference R1–R5 결과
@@ -106,6 +112,17 @@ python ~/.claude/skills/sam-workshop/_shared/scripts/ref_verify_pubmed.py \
 - `verification_certificate.md` — pass/fail 요약
 
 **Hybrid 원칙 (v1.3):** compliance_backend G2.6은 deterministic ghost/orphan을 정확하게 잡고, ref_verify_pubmed.py R3은 LLM precheck로 false negative를 보완. 두 결과 일치하면 신뢰도↑, 불일치하면 LLM 출력에 (G2.6 결과)를 그대로 인용.
+
+#### ⚠️ Degraded Mode — 스크립트/네트워크 실패 시 (fail-closed)
+
+Python 미설치·스크립트 미발견·PubMed/Crossref timeout·429가 **재시도 1회 후에도** 지속되면, 디버깅에 3분 이상 쓰지 말고 즉시 전환:
+
+1. **R3만 로컬 가능하면 수행** (compliance_backend는 네트워크 불필요).
+2. 위험 상위 **5개 reference만** doi.org·PubMed 웹을 **직접 조회**해 R1·R2 수동 확인 (브라우저/웹검색 — 출처 화면 기준).
+3. **certificate Status = `INCOMPLETE_EXTERNAL_CHECK`** 로 기록 — **PASS 금지.** (네트워크 장애는 원고 오류가 아니므로 FAIL도 아님 — 구분 기록.) Required next step에 "네트워크 회복 후 동일 명령 재실행" 명시.
+4. **하지 않는 것**: LLM 기억으로 DOI·메타·철회 여부 판정(검증 아님) / 의존성 자동 설치(pip install) / full text 크롤링 / 원본 `.docx` 직접 수정.
+
+→ 외부 검증이 미완이면 Self-Gate B를 통과할 수 없다. "검증한 척"이 가장 위험하다.
 
 ### Phase 3 (10분) — R6 Paraphrase 검증 (Claude Phase)
 
@@ -135,7 +152,7 @@ CRITICAL:
 - [ ] R6 "Cannot judge" 항목 → full text 확인 follow-up 표시
 - [ ] mortality/safety/guideline 주장은 본인이 직접 abstract+full text로 통과 결정
 
-→ verification_certificate.md 갱신: PASS / FAIL
+→ verification_certificate.md 갱신: PASS / FAIL / **INCOMPLETE_EXTERNAL_CHECK** (외부 검증 미완 — PASS 불가, Degraded Mode 참조)
 
 ### Phase 5 (2분) — HITL emit
 
@@ -145,7 +162,7 @@ CRITICAL:
 
 스크립트가 다음 패턴 매칭으로 자동 우선순위:
 
-1. **수치/효과크기** ("reduced mortality by 30%", "OR 1.42")
+1. **수치/효과크기** ("reduced mortality by 30%", "OR 1.42") — 0순위 키워드: mortality, survival, adverse, complication, harm/benefit, recommend
 2. **Causal claim** ("X causes Y", "leads to")
 3. **Strong claim** ("first", "only", "definitive", "gold standard")
 4. **Guideline / consensus** ("current guidelines recommend")
@@ -203,12 +220,13 @@ full text follow-up.
 ```markdown
 # Verification Certificate
 
-- Status (R1-R5): PASS | FAIL
+- Status (R1-R5): PASS | FAIL | INCOMPLETE_EXTERNAL_CHECK
 - Total references: N
 - High severity: N
 - Medium severity: N
 - R6 sampled: N
 - R6 verdict distribution: Supported X / Partially X / Not supported X / Contradicted X / Cannot judge X
+  (상세: r6_claim_support.jsonl verdict + r6_summary.md)
 
 ## Required next step
 1. R1-R5 high 항목 본인 결정
@@ -221,7 +239,7 @@ full text follow-up.
 
 스크립트가 자동:
 ```json
-{"ts":"...","paper_id":"...","step":5,"gate":"C_verify_critic","event_type":"gate_pass","skill":"verify-reference-essential","engine":"code-script+pubmed","category":"reference_integrity","severity":2,"description":"R1-R5: 0 high, 2 medium. R6 prepped 8 samples."}
+{"ts":"...","paper_id":"...","step":5,"gate":"B_draft","event_type":"gate_pass","skill":"verify-reference-essential","engine":"code-script+pubmed","category":"reference_integrity","severity":2,"description":"R1-R5: 0 high, 2 medium. R6 prepped 8 samples."}
 ```
 
 추가로 R6 verdict 별도 emit (Claude phase):
@@ -245,6 +263,7 @@ full text follow-up.
 
 ## Self-Gate B 체크리스트
 
+- [ ] **외부 검증 완결** — certificate가 `INCOMPLETE_EXTERNAL_CHECK`면 통과 불가 (재실행 후 재판정)
 - [ ] 모든 R1–R5 high severity 처리
 - [ ] R6 Not supported / Contradicted 0건 (또는 본문 수정 완료)
 - [ ] mortality/safety/guideline 주장 본인 full text 확인

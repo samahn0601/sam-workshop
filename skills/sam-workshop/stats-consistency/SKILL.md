@@ -26,7 +26,7 @@ description: >
 |---|---|---|
 | `workshop-mini` | 5–10분 | regex 자동 + Claude 1차 review |
 | `standard` | 20분 | + 표 cell-by-cell 비교 |
-| `deep-audit` | 45분 | + 원시 데이터 재계산 |
+| `deep-audit` | 45분 | + 원시 데이터 재계산 (본 스킬 범위 밖 — 별도 R/Python 분석 세션에서) |
 
 ## 입력
 
@@ -36,15 +36,23 @@ description: >
 
 ## 절차 (workshop-mini, 5–10분)
 
-### 1. 자동 추출 + 비교 (Code, 3분)
+### 1. 입력 preflight + 자동 추출 비교 (Code, 3분)
+
+**Preflight (실행 전):**
+- 필수: `manuscript.md` — 없으면 `INCOMPLETE_MANUSCRIPT_MISSING`, PASS 금지.
+- 선택: `abstract.md` · `tables/`(.md/.txt 1개 이상) — **존재할 때만 해당 인자 포함.** 부재는 실패가 아니라 coverage limitation — `SKIPPED_ABSTRACT_MISSING` / `SKIPPED_TABLES_MISSING`으로 기록.
 
 ```bash
-python ~/.claude/skills/sam-workshop/_shared/scripts/stats_consistency_check.py \
+python ${CLAUDE_SKILL_DIR}/../_shared/scripts/stats_consistency_check.py \
   --manuscript paper_home/04_draft/manuscript.md \
-  --abstract  paper_home/04_draft/abstract.md \
-  --tables    paper_home/04_draft/tables/ \
-  --out       paper_home/05_verify/stats_consistency.md
+  [있을 때만: --abstract paper_home/04_draft/abstract.md] \
+  [있을 때만: --tables   paper_home/04_draft/tables/] \
+  --out paper_home/05_verify/stats_consistency.md
 ```
+
+(경로: 공유 스크립트는 형제 폴더 `_shared` — `${CLAUDE_SKILL_DIR}` 미확장 시 Claude가 절대경로 치환.)
+
+**스크립트 실패 시 (fail-closed + 제한적 triage):** `INCOMPLETE_SCRIPT_FAILED`로 기록, gate_pass 금지. Claude가 눈에 보이는 n·%·p·CI **후보를 위치와 함께 목록화**하는 것만 허용 — 단 `LLM_ASSISTED_MANUAL_SCAN_UNVERIFIED` 표기 + "사용자 확인 필요". LLM 추출을 검증 완료로 취급 금지, 산술 재계산·단위 변환 확정 금지.
 
 자동 검출:
 - `[N_VARIANTS]` 본문/abstract/표에 다른 n
@@ -65,10 +73,13 @@ python ~/.claude/skills/sam-workshop/_shared/scripts/stats_consistency_check.py 
 - 명시 안 됐으면 어느 부분에 무엇을 추가해야 하는가?
 
 특별히 확인:
-- Table 1 baseline n vs Methods 진술 n
+- Table 1 baseline n vs Methods 진술 n (+ analysed n vs total n — 결측/제외로 설명되는가)
 - Abstract의 핵심 효과크기 vs Results 본문의 OR/HR/95% CI
 - Discussion에서 인용한 본인 수치 vs Results 표 수치
 - p-value 자릿수 (text "p<0.001" vs table "0.0003" 등)
+- **Denominator 정합**: "23/120 (19.2%)" — n/N과 %가 맞는가
+- **방향-언어 모순**: "increased/higher"라고 쓰는데 OR/HR<1 등 효과 방향과 서술 불일치
+- **CI ↔ p 논리 모순**: CI가 1.0(비율) 또는 0(차이)을 포함하는데 p<0.05로 기재 (또는 그 반대)
 ```
 
 ### 3. Self-Gate B 결정
@@ -110,7 +121,7 @@ python ~/.claude/skills/sam-workshop/_shared/scripts/stats_consistency_check.py 
 
 스크립트 자동:
 ```json
-{"ts":"...","step":5,"gate":"C_verify_critic","event_type":"gate_pass","skill":"stats-consistency","engine":"code-script","category":"stats_consistency","severity":1}
+{"ts":"...","step":5,"gate":"B_draft","event_type":"gate_pass","skill":"stats-consistency","engine":"code-script","category":"stats_consistency","severity":1}
 ```
 
 ## Floor (절대 위임 불가)
@@ -133,7 +144,11 @@ python ~/.claude/skills/sam-workshop/_shared/scripts/stats_consistency_check.py 
 2. **Total n과 analyzed n 차이** — 결측치 명시 안 됨
 3. **Table 1 합계가 안 맞음** — 결측 또는 % 반올림 누적 오차
 4. **p<0.05 와 p=0.04** — 같은 결과인데 표현 다름 → reviewer 의심
-5. **95% CI 방향이 효과 방향과 모순** — OR<1인데 CI 0.x-1.x
+5. **효과 방향과 서술의 모순** — 본문은 "increased/risk 상승"인데 OR/HR<1, 또는 CI가 point estimate를 포함하지 않는 표기 오류
+
+## Self-Gate B 추가 점검
+
+- [ ] `INCOMPLETE_*` / `SKIPPED_*` 항목 검토 — INCOMPLETE는 해소 전 통과 불가, SKIPPED는 한계로 인지
 
 ## 다음 단계
 

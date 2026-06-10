@@ -3,8 +3,9 @@ name: figure-prompt-eng
 description: >
   Use this skill when the manuscript needs figures and the author must decide
   figure type (statistical / conceptual / illustrative / visual abstract) and
-  generate prompts for parallel image generation with GPT-image-2 and Nano
-  Banana 2. Trigger when user says "figure 만들기", "그림 생성", "visual
+  generate prompts for parallel image generation with two role-based engines
+  (English-strong ∥ Korean-text-strong; as-of examples: GPT-image-2, Nano
+  Banana 2). Trigger when user says "figure 만들기", "그림 생성", "visual
   abstract", "프롬프트 작성", "GPT image", "Nano Banana", "figure prompt", or
   operates in Step 7 of sam-workshop pipeline. Do not use for statistical chart
   generation directly (use Code with matplotlib/R for Type S) or for figure
@@ -12,10 +13,10 @@ description: >
   paper_home/03_outline/outline.md + paper_home/04_draft/manuscript.md +
   (optional) data files for Type S. Output:
   paper_home/07_figures/{figure_plan.md, prompts/, candidates/, selected/,
-  final/}. Pipeline position: sam-workshop Step 7. Medical context: Korean
-  medical infographics need Korean text rendering (Nano Banana 2 stronger),
-  English figures often better with GPT-image-2; statistical figures
-  deterministically generated via Code. Trigger keywords: figure, 그림,
+  final/}. Pipeline position: sam-workshop Step 7 (figure brief = step 7
+  option). Medical context: Korean medical infographics need an engine strong
+  at Korean text rendering; English figures often better with English-strong
+  engines; statistical figures deterministically generated via Code. Trigger keywords: figure, 그림,
   infographic, visual abstract, 그래프, schematic, GPT-image, Nano Banana,
   matplotlib, 도식.
 ---
@@ -26,12 +27,14 @@ description: >
 
 ## Figure type 4분류
 
-| Type | 예 | 도구 |
+| Type | 예 | 도구 (역할 기반) |
 |---|---|---|
 | **S (Statistical)** | bar/forest plot, KM curve, ROC, scatter | **Claude Code** (matplotlib/R) — image gen 부적합 |
-| **C (Conceptual)** | 연구 design, 메커니즘 모식도, flowchart | GPT-image-2 ∥ Nano Banana 2 |
-| **I (Illustrative)** | 해부 schematic, 병태생리 | GPT-image-2 ∥ Nano Banana 2 |
-| **V (Visual Abstract)** | infographic, 한글/영문 visual abstract | **Nano Banana 2 우선** (한글 렌더링), GPT-image-2 비교 |
+| **C (Conceptual)** | 연구 design, 메커니즘 모식도, flowchart | 이미지 생성 엔진 2종 병렬 (영문 강함 ∥ 한글 강함) |
+| **I (Illustrative)** | 해부 schematic, 병태생리 | 이미지 생성 엔진 2종 병렬 |
+| **V (Visual Abstract)** | infographic, 한글/영문 visual abstract | **한글 텍스트 렌더링 강한 엔진 우선**, 타 엔진 비교 |
+
+> 도구명은 영구 규칙이 아니라 **역할로 선택**한다. 작성 시점 예시(as of 2026-06): 영문·정밀 편집 = OpenAI GPT-image-2 / 한글 렌더링 = Google Nano Banana 2(gemini-3.1-flash-image). **실행 시점의 가용 최신 도구·저널 figure 정책을 확인**할 것.
 
 ## 모드
 
@@ -47,10 +50,11 @@ description: >
 
 - **Auto-Pilot 모드(H1) 필수**: brief+caption만 산출하면 reference run이 figure 없이 끝난다. 따라서 H1 모드에서는 fallback renderer를 default로 호출.
 - **인간 워크숍(H3) 선택**: step 7(Humanize & Package) 안에서는 brief+caption만, 이미지 렌더링은 step 7 이후 또는 homework로 미룸.
-- **사용법**:
+- **사용법** (함수 추가는 standard/deep 모드에서 — mini에서는 복사·실행까지만):
   ```bash
-  cp ~/.claude/skills/sam-workshop/_shared/scripts/figure_render_fallback.py \
-     paper_home/07_figures/build_figures.py
+  # Claude가 OS 무관하게 복사 (Windows는 PowerShell Copy-Item)
+  # 원본: ${CLAUDE_SKILL_DIR}/../_shared/scripts/figure_render_fallback.py
+  # 대상: paper_home/07_figures/build_figures.py
   # 본인 figure 함수 추가 후
   python paper_home/07_figures/build_figures.py
   # → paper_home/07_figures/final/figure_<n>_<slug>.png (300 dpi)
@@ -64,9 +68,11 @@ description: >
 - `paper_home/04_draft/manuscript.md` — 본문에서 figure 참조
 - (Type S용) 본인 데이터 파일
 
-## 절차 (workshop-mini, 25분)
+## 절차
 
-### 7.1 Figure plan (5분, Claude Chat/Cowork)
+> **workshop-mini(15분) = 7.1 + 7.3.1까지만** (figure plan + 캡션 + prompt 작성). 7.2 Type S 렌더·7.3.2 이후 생성·평가·변환은 **standard 모드 또는 homework** — 모드 표와 동일.
+
+### 7.1 Figure plan (5분, Claude Chat/Code 탭)
 
 ```
 당신은 의학 figure designer입니다. 본 manuscript에 필요한 figure를 list화:
@@ -81,7 +87,7 @@ description: >
 
 산출 → `paper_home/07_figures/figure_plan.md`
 
-### 7.2 Type S 처리 (Code, 10분)
+### 7.2 Type S 처리 (Code, 10분 — standard/homework)
 
 ```bash
 # Claude Code에서 matplotlib/R script 즉석 작성·실행
@@ -95,7 +101,7 @@ EOF
 
 저널 spec (DPI 300/600, color mode RGB/CMYK, font Arial 7pt 등) 자동 적용.
 
-### 7.3 Type C/I/V 병렬 생성 (10분)
+### 7.3 Type C/I/V 병렬 생성 (prompt 정제는 mini 포함 10분 — 생성·평가는 standard/homework)
 
 #### 7.3.1 Prompt 정제 (Claude)
 
@@ -105,7 +111,7 @@ EOF
 의도: "당뇨병 진단 후 SGLT2 억제제 vs DPP-4 억제제 처방 비교 시 심혈관 사건 발생 mechanism 도식"
 
 Type 분기 자동 감지 (S/C/I/V).
-한글 텍스트 포함 시 → Nano Banana 2 우선 표시.
+한글 텍스트 포함 시 → 한글 렌더링 강한 엔진 우선 표시.
 
 Prompt 양식:
 - Subject: "..."
@@ -123,16 +129,18 @@ Prompt 양식:
 
 #### 7.3.2 병렬 생성
 
-| Engine | 사용 |
+| Engine (역할) | 사용 |
 |---|---|
-| GPT-image-2 (chat.openai.com) | 동일 prompt |
-| Nano Banana 2 (Gemini/Google AI Studio) | 동일 prompt — 한글 텍스트 우선 |
+| 영문·정밀 편집 강한 엔진 | 동일 prompt |
+| 한글 렌더링 강한 엔진 | 동일 prompt — 한글 텍스트 우선 |
+
+(as-of 예시는 위 Type 표 참조 — 실행 시점 가용 도구 확인)
 
 → 결과 모두 `paper_home/07_figures/candidates/`에 저장:
-- `Fig1_v1_gpt.png`
-- `Fig1_v1_nanobanana.png`
+- `Fig1_v1_engineA.png`
+- `Fig1_v1_engineB.png`
 
-#### 7.3.3 비교·평가 (Claude vision 또는 GPT vision)
+#### 7.3.3 비교·평가 (vision 가능 LLM)
 
 5차원 평가:
 
@@ -144,7 +152,7 @@ Prompt 양식:
 | 4. Journal-fit | 1–5 | 저널 스타일 부합? |
 | 5. Message clarity | 1–5 | 한 눈에 이해? |
 
-종합 ≥ 20/25 → 통과. 미달 → prompt 재정제 후 재생성 (max 5 iter).
+종합 ≥ 20/25 → 통과. 미달 → prompt 재정제 후 재생성 (standard 3 iter / deep-audit max 5 iter).
 
 #### 7.3.4 선택
 
@@ -173,9 +181,9 @@ EOF
 ## Prompt
 {영문 prompt 전문}
 
-## Engine assignments
-- GPT-image-2: yes
-- Nano Banana 2: yes (한글 텍스트 포함)
+## Engine assignments (역할 기반)
+- 영문·정밀 편집 엔진: yes
+- 한글 렌더링 엔진: yes (한글 텍스트 포함)
 
 ## Iteration log
 - v1: ...
@@ -195,8 +203,10 @@ EOF
 ## HITL Event Emit
 
 ```json
-{"ts":"...","step":7,"gate":"D_finish","event_type":"gate_pass","skill":"figure-prompt-eng","engine":"gpt-image-2+nano-banana-2","category":"figure_generation","severity":1,"description":"Fig1 generated v2 iter, score 22/25, GPT-image-2 won","time_to_fix_min":24}
+{"ts":"...","step":7,"gate":"D_finish","event_type":"gate_pass","skill":"figure-prompt-eng","engine":"image-gen-parallel","category":"figure_generation","severity":1,"description":"Fig1 generated v2 iter, score 22/25, engineA won","time_to_fix_min":24}
 ```
+
+(emit은 figure 산출 기록용 — Self-Gate D 종합 판정은 desk-reject-precheck가 담당)
 
 ## 결정적 vs LLM 분리
 
@@ -205,7 +215,7 @@ EOF
 
 ## Solo + Claude-only fallback
 
-GPT/Gemini 무료 한도 초과 또는 미사용:
+외부 이미지 생성 엔진 무료 한도 초과 또는 미사용:
 1. **Type S**: Code로 직접 그림 — 백업 가능
 2. **Type C/I**: Claude Code로 SVG 직접 작성 (간단 schematic)
 3. **Type V (visual abstract)**: PowerPoint/Keynote에서 수동 작성 권고
@@ -226,12 +236,12 @@ GPT/Gemini 무료 한도 초과 또는 미사용:
 
 ## 자주 발생하는 함정
 
-1. **GPT/Gemini가 약물 화학구조 멋대로 그림** — 임상적 무의미. Type C/I 사용 시 화학구조는 ChemDraw 외부 권고
-2. **한글 텍스트 GPT-image-2에서 깨짐** — Nano Banana 2 우선, 또는 영문으로 작성 후 후처리
+1. **이미지 생성 엔진이 약물 화학구조 멋대로 그림** — 임상적 무의미. Type C/I 사용 시 화학구조는 ChemDraw 외부 권고
+2. **한글 텍스트가 영문 중심 엔진에서 깨짐** — 한글 렌더링 강한 엔진 우선, 또는 영문으로 작성 후 후처리
 3. **DPI 부족 (72dpi 등)** — 저널 desk reject. 반드시 Code로 변환 검증
 4. **Figure 1trier 시도** — 1번에 성공 거의 없음. 병렬 + iter 표준 사고
 5. **Figure caption AI 시그니처** — humanize-en/ko로 후처리
 
 ## 다음 단계
 
-→ Step 8 Humanize → Verify → Package → Final
+→ Step 7 Humanize & Package로 복귀 (figure brief는 step 7의 옵션) → Step 8 Wrap & Next. 렌더링 미완 figure는 homework.

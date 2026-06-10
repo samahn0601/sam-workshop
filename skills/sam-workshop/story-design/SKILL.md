@@ -8,7 +8,8 @@ description: >
   in Step 3 Outline of the sam-workshop pipeline. Do not use for figure planning
   (use figure-prompt-eng) or reference verification (use verify-reference-essential).
   Input: paper_home/01_design/{article_type.md, journal_shortlist.md} +
-  paper_home/02_research/deep_research.md. Output:
+  paper_home/02_research/{claim_bank.jsonl, evidence_table.md} (+
+  deep_research.md as backup source). Output:
   paper_home/03_outline/{story_1pager.md, outline.md, evidence_map.md}.
   Pipeline position: sam-workshop Step 3 / Self-Gate A. Medical context: ICMJE
   IMRaD structure, journal-specific section requirements, claim-evidence
@@ -31,8 +32,9 @@ description: >
 ## 입력
 
 - `paper_home/01_design/article_type.md` — 잠정 article type
-- `paper_home/01_design/journal_shortlist.md` — target 저널 spec
-- `paper_home/02_research/deep_research.md` — Chat Deep Research 결과
+- `paper_home/01_design/journal_shortlist.md` — target 저널 spec (**Scope fit·Fit verdict·Reject risk 칼럼 반영** — Strong fit 1순위, 없으면 Reject risk 낮은 후보 기준)
+- **`paper_home/02_research/claim_bank.jsonl` + `evidence_table.md`** (evidence-harvest 산출 — **근거의 단일 작업대**. evidence_table을 1차 인덱스로 읽고, high-risk·locked claim만 claim_bank에서 발췌)
+- `paper_home/02_research/deep_research.md` — 원문 확인용 보조 (claim_bank 있으면 재해석 금지)
 - (선택) 본인 보유 데이터/케이스 기술
 
 ## 절차 (workshop-mini, 25분)
@@ -96,19 +98,19 @@ Article type별 분기:
 
 산출 → `paper_home/03_outline/outline.md` (Live Artifact 후보)
 
-### 3.4 Evidence map (5분)
+### 3.4 Evidence map (5분) — claim_id 기반
 
-각 outline 섹션에 deep_research의 reference candidate를 매핑.
+각 outline 섹션에 **claim_bank의 claim_id**를 매핑 (섹션당 핵심 claim 1–3개; `[NO_VERBATIM]`/`[INCOMPLETE]` claim은 스토리 중심축에 두지 않고 `Step 5 보강` 표시):
 
-| 섹션 | 핵심 주장 | 인용 후보 (DOI or 1저자-연도) | 강도 |
-|---|---|---|---|
-| Intro §2 | "한국 청소년 전자담배 사용률 증가" | Lee 2024 (KCDC), Kim 2023 | 강 |
-| Methods | "Logistic regression with covariates" | (방법) | - |
-| Discussion §1 | "사회적 우울이 매개" | Park 2025, Cho 2024 | 중 |
+| 섹션 | claim_id | 핵심 주장 (요약) | source/DOI | risk | fit 관련성 | action |
+|---|---|---|---|---|---|---|
+| Intro §2 | C001 | 한국 청소년 e-cig 사용률 증가 | S003, S007 | medium | Strong-fit 저널 독자 관심 | keep |
+| Discussion §1 | C003 | 사회적 우울 매개 | S009 | high ★ | 핵심 novelty | 본인 verbatim 확인 |
+| Discussion §2 | — | (인용 후보 없음) | — | — | — | `NO_CLAIM_YET` → Step 5 보강 |
 
 산출 → `paper_home/03_outline/evidence_map.md`
 
-→ 부족한 섹션 (인용 후보 0–1개)은 **Step 5 verify에서 보강 검색** 필요로 표시.
+→ claim_id 없는 섹션(`NO_CLAIM_YET`)은 **Step 5 verify에서 보강 검색** 필요로 표시. claim_bank가 없으면(evidence-harvest 미실행) deep_research에서 직접 매핑하되 그 사실을 명시.
 
 ## Solo + Claude-only fallback
 
@@ -207,4 +209,4 @@ Section-by-section, 각 섹션마다:
 
 ## 다음 단계
 
-→ Step 4 Draft (Cowork Live Artifact `manuscript.md`)
+→ Step 4 Draft (Code 탭 작업본 `manuscript.md`)

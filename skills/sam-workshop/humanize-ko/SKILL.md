@@ -5,19 +5,24 @@ description: >
   assistance: remove AI-signature Korean vocabulary, normalize translation
   artifacts, retain scientific accuracy. Trigger when user says "국문 humanize",
   "한국어 자연화", "번역체 제거", "AI 시그니처 한국어", "휴머나이즈 국문",
-  "natural Korean", or operates in Step 8 of sam-workshop pipeline (Korean
+  "natural Korean", or operates in Step 7 (Humanize & Package) of sam-workshop pipeline (Korean
   manuscripts only). Do not invent data, results, p-values, citations, or
   change effect direction. Use humanize-en for English manuscripts. Input:
-  paper_home/04_draft/manuscript.md (Korean). Output: in-place edit + optional
+  paper_home/04_draft/manuscript.md (Korean) +
+  paper_home/06_critic/revision_backlog.jsonl (accepted:true only). Output: in-place edit + optional
   paper_home/04_draft/manuscript_versions/manuscript_humanized_v{N}.md.
-  Pipeline position: sam-workshop Step 8. Medical context: KAMJE/한국 의학저널
+  Pipeline position: sam-workshop Step 7. Medical context: KAMJE/한국 의학저널
   스타일, 번역체 검출, 의학 한국어 관용 표현. Trigger keywords: 국문, 한국어,
   번역체, AI 시그니처 국문, 휴머나이즈, 자연스러운 한국어, polish 한국어.
 ---
 
-# humanize-ko (Step 8)
+# humanize-ko (Step 7 — Humanize & Package)
 
 > AI가 쓴 국문 manuscript를 한국어 학자가 쓴 것처럼 다듬되, **과학적 정확성·KAMJE 관행은 절대 깨지 않는다.**
+
+## 윤리 원칙
+
+이 스킬은 의미를 보존하면서 문장 흐름·자연스러움을 개선하는 도구다. **AI 사용 사실을 숨기거나 AI 탐지를 회피하기 위한 용도가 아니다.** 원고 준비에 AI를 사용했다면 대상 저널 정책에 따라 cover letter·원고 내 적절한 위치에 공개한다(ICMJE). 정확성·독창성·인용·최종 문구의 책임은 인간 저자에게 있다. (국문 자연화 = 구어화가 아니라 번역투 완화·호응 정리·과도한 수식 축소 — 자연스러운 연결어까지 전부 삭제하는 과교정 금지.)
 
 ## Non-Negotiables (humanize-en과 동일 8조)
 
@@ -77,6 +82,7 @@ description: >
 
 - `paper_home/04_draft/manuscript.md` (Korean)
 - `paper_home/01_design/journal_shortlist.md` — KAMJE 저널 spec
+- `paper_home/06_critic/revision_backlog.jsonl` — **accepted:true 항목만 반영** (비승인 반영 금지; 포맷 위반 시 HITL emit)
 
 ## 절차 (workshop-mini, 15분)
 
@@ -115,7 +121,9 @@ Methods/Results 면제.
 수정 list.
 ```
 
-### Step 4 (2분) — Self-Gate D pre-check
+### Step 4 (2분) — Post-humanize drift check + Self-Gate D pre-check
+
+diff에 잡힌 변경 문장만(전체 재검증 금지): `style-only / claim-touching / uncertain` 태깅 → claim-touching·uncertain만 원문 Δ check(수치·효과방향) + R6 spot 재확인 + revision_backlog accepted:true 대조 → drift 의심 시 해당 문장 원문 롤백 + diff 기록.
 
 ## Output 표준
 
@@ -133,7 +141,7 @@ In-place edit + diff 표:
 ## HITL Event Emit
 
 ```json
-{"ts":"...","step":8,"gate":"D_finish","event_type":"gate_pass","skill":"humanize-ko","engine":"claude","category":"humanize_ko","severity":1,"description":"AI 시그니처 8건, 번역체 12건 수정","time_to_fix_min":15}
+{"ts":"...","step":7,"gate":"D_finish","event_type":"gate_pass","skill":"humanize-ko","engine":"claude","category":"humanize_ko","severity":1,"description":"AI 시그니처 8건, 번역체 12건 수정","time_to_fix_min":15}
 ```
 
 ## 결정적 vs LLM 분리
@@ -188,4 +196,4 @@ In-place edit + diff 표:
 
 ## 다음 단계
 
-→ verify-post-humanize-mini (humanize 후 R6 재검증) → desk-reject-precheck → package-docx
+→ Step 4의 drift check 완료 → desk-reject-precheck (Step 7 quick scan) → Step 8 Wrap & Next

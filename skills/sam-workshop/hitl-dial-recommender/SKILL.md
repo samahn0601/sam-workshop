@@ -27,10 +27,10 @@ description: >
 
 워크숍/논문 세션 시작 시(Idea Lock 직전) 수행:
 
-1. `~/.claude/skills/sam-workshop/_shared/templates/pipeline_map.md`의 8단계 맵 + 운전 모드 표를 보여준다.
+1. `${CLAUDE_SKILL_DIR}/../_shared/templates/pipeline_map.md`의 8단계 맵 + 운전 모드 표를 보여준다. (공유 자산은 형제 폴더 `_shared` — 변수 미확장 시 Claude가 절대경로 치환)
 2. 사용자가 자연어로 모드를 고르게 한다 (예: "표준", "다 맡기고 끝에만", "③⑤만 내가"). 기본값 🛡️표준(H3).
 3. 선택을 `paper_home/.sam/hitl/gate_plan.json` (`gate_plan.schema.json` 형식)으로 저장한다.
-4. 이후 각 step 종료 시 Cowork project instructions의 gate_plan 참조 규칙에 따라 정지(`review`)/자동(`auto`)이 동작한다.
+4. 이후 각 step 종료 시 Code 탭 project instructions(CLAUDE.md)의 gate_plan 참조 규칙에 따라 정지(`review`)/자동(`auto`)이 동작한다.
 
 | 운전 모드 | dial | 정차 단계 | 노출 |
 |---|---|---|---|
@@ -73,11 +73,15 @@ description: >
 ### Step 1 (3분) — 데이터 집계
 
 ```bash
-python ~/.claude/skills/sam-workshop/_shared/scripts/hitl_recommend.py \
+python ${CLAUDE_SKILL_DIR}/../_shared/scripts/hitl_recommend.py \
   --events paper_home/.sam/hitl/events.jsonl \
   --profile paper_home/.sam/hitl/paper_profile.json \
   --out paper_home/.sam/hitl/dial_recommendation.md
 ```
+
+> (v1.4) `--shortlist paper_home/01_design/journal_shortlist.md` 선택 인자 — 미지정 시 events 경로에서 자동 추정. **Fit Verdict Guardrail**(아래 hard guardrail 표)이 이 파일의 1차 저널 verdict를 결정적으로 읽는다.
+
+> **입력 완전성 (fail-closed)**: `events.jsonl`이 비어 있거나 `paper_profile.json`이 없으면 — 산출물에 **`INPUT_INCOMPLETE` 표시 + "보수 권고(신뢰 낮음)"** 명시. 정상 처방처럼 보이게 두지 않는다 (H3 보수 default는 가능하되 사유 표기).
 
 자동 산출:
 - Risk score 계산 (0–100)
@@ -100,7 +104,7 @@ python ~/.claude/skills/sam-workshop/_shared/scripts/hitl_recommend.py \
 **v1.3 신규**: workshop wrap 마지막에 본 워크숍 산출물에 대한 **자가-마감 5–7일 체크리스트**를 자동 생성:
 
 ```bash
-python skills/sam-workshop/_shared/scripts/hitl_recommend.py \
+python ${CLAUDE_SKILL_DIR}/../_shared/scripts/hitl_recommend.py \
   --events  paper_home/.sam/hitl/events.jsonl \
   --profile paper_home/.sam/hitl/paper_profile.json \
   --out     paper_home/.sam/hitl/dial_recommendation.md \
@@ -144,6 +148,8 @@ score = 25 × severe_hallucination_rate
 | 통계 high-severity 불일치 | H3 |
 | 첫/두번째 AI-assisted manuscript | H3 |
 | 실제 journal submission 목표 | H2 이하면 C gate 필수 |
+| **journal_shortlist Fit verdict = Risky/Mismatch 또는 scope 미확인** (실제 투고 목표 시) | 최소 H3 + Step 1 재정의 전 투고 금지 (C/D gate 필수) — ✅ v1.4 `hitl_recommend.py` 구현(회귀 12종) |
+| 원고/자료에 환자 식별정보 발견 | 즉시 정지 — Medical floor (모드·dial 무관) |
 
 → Score 기반 dial과 guardrail 중 더 높은 쪽 채택.
 
@@ -219,7 +225,7 @@ score = 25 × severe_hallucination_rate
 - [ ] checklist의 모든 item이 manuscript에 어디 있는지 row 기재
 
 ## ③ AI Use Disclosure 정확성 (2일차)
-- [ ] 사용한 AI 모델명 (Claude Opus 4.7 / GPT-5 / Gemini 3.1 등) 정확
+- [ ] 실제 사용한 AI 도구·모델명·버전·사용 날짜를 **정확히** 기록 (본인이 채움 — 추정 금지, 저널 지침 우선)
 - [ ] 어느 단계에서 사용했는지 (draft / verify / critic / figure / 통계)
 - [ ] 본인이 검증한 항목 명시
 

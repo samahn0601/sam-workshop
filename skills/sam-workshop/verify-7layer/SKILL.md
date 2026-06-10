@@ -26,12 +26,12 @@ description: >
 | Layer | 목적 | 도구 | 자동화율 |
 |---|---|---|---|
 | L1 DOI 실재 | DOI/PMID 실재 | Crossref + PubMed | 100% |
-| L2 메타데이터 | 저자/제목/저널/연도/권/페이지 | esummary 비교 | 100% |
-| L3 수치/날짜 | 본문 핵심 수치 vs 정부 DB / 원논문 | Claude 웹검색 + Sam 직접 확인 | 80% |
+| L2 메타데이터 | 저자/제목/저널/연도/권/페이지 **+ publication status (retracted / correction / expression of concern / 최신판)** | esummary 비교 + publication_type/update 확인 | 100% |
+| L3 수치/날짜 | 본문 핵심 수치 vs 정부 DB / 원논문 | 웹검색 + 저자 본인 직접 확인 | 80% |
 | L4 인용 구문 | 인용 paraphrase 정확성 (5분류) | Claude semantic + abstract fetch | 90% |
 | L5 논리 정합성 | Intro gap → Methods → Results → Discussion 연결 | Claude reasoning | 80% |
 | L6 Ghost/Orphan | 본문 ↔ reference list | regex | 100% |
-| L7 학계 합의 | 가이드라인/consensus와 일치 | Gemini grounding 또는 Claude 웹검색 | 90% |
+| L7 학계 합의 | 가이드라인/consensus와 일치 | 웹검색·grounding 가능한 LLM (Claude 웹검색 또는 외부 LLM) | 90% |
 
 ## 모드
 
@@ -48,13 +48,15 @@ description: >
 ### L1+L2+L6 (15분) — verify-reference-essential 재실행
 
 ```bash
-python ~/.claude/skills/sam-workshop/_shared/scripts/ref_verify_pubmed.py \
+python ${CLAUDE_SKILL_DIR}/../_shared/scripts/ref_verify_pubmed.py \
   --manuscript paper_home/04_draft/manuscript.md \
   --references paper_home/04_draft/references.txt \
-  --email YOUR_EMAIL \
+  --email <연락 가능한 이메일 — 더미 그대로 실행 금지> \
   --r6-sample 0 \
   --out paper_home/05_verify/
 ```
+
+> 경로: 공유 스크립트는 형제 폴더 `_shared` (`${CLAUDE_SKILL_DIR}` 미확장 시 Claude가 절대경로 치환). **Fail-closed**: 스크립트/네트워크 실패·retraction/최신판 미확인·핵심 수치(L3) 미검증·임상 권고(L7) 최신성 미확인 시 해당 layer `INCOMPLETE` — 전체 PASS 금지. 핵심 주장에 연결된 인용이 L4 `Cannot judge`여도 PASS 금지.
 
 ### L3 (20분) — 수치/날짜 정밀 검증
 
@@ -63,7 +65,7 @@ python ~/.claude/skills/sam-workshop/_shared/scripts/ref_verify_pubmed.py \
 1. 추출
 2. 출처 식별 (정부 DB / 원논문 / 본인 데이터)
 3. 본인이 직접 정부 DB / 원논문 abstract를 웹검색해서 cross-check
-4. LLM에게 수치 확인 요청 절대 금지 (결정적 소스만)
+4. LLM의 "기억"으로 수치 확정 절대 금지 — 웹검색은 출처 화면 확인용 보조, 확정은 결정적 소스(원문·DB)만
 
 표:
 | # | 수치 | 본문 값 | 원문 값 | 출처 URL | 일치 | 비고 |
@@ -109,7 +111,7 @@ verify-reference-essential 결과 재사용.
 - 현재 (2026) 가이드라인 (KSCVD/ESC/AHA/등)과 비교
 - consensus_tag: established | emerging | controversial | outdated
 
-Gemini grounding 또는 Claude 웹검색으로 가이드라인 직접 확인.
+웹검색·grounding 가능한 LLM(Claude 웹검색 또는 외부 LLM)으로 가이드라인 직접 확인.
 LLM 단독 메모리만으로 통과 금지.
 ```
 
@@ -137,14 +139,15 @@ LLM 단독 메모리만으로 통과 금지.
 ## HITL Event Emit
 
 ```json
-{"ts":"...","step":5,"gate":"C_verify_critic","event_type":"gate_pass","skill":"verify-7layer","engine":"code+claude+gemini","category":"full_audit","severity":3,"description":"L1 PASS, L2 1 mismatch, L3 2 mismatch, L4 2 CITE_OVERSTATED, L5 1 gap, L7 1 outdated"}
+{"ts":"...","step":5,"gate":"B_draft","event_type":"gate_pass","skill":"verify-7layer","engine":"code+llm","category":"full_audit","severity":3,"description":"L1 PASS, L2 1 mismatch, L3 2 mismatch, L4 2 CITE_OVERSTATED, L5 1 gap, L7 1 outdated"}
 ```
 
 ## Floor
 
 - 모든 layer 본인 ratify 필수 (auto-fix만으로 통과 금지)
 - L7 가이드라인 outdated 발견 시 본문 수정 + Discussion에 명시
+- (layer 밖) **AI 공시·저자권·COI 점검은 desk-reject-precheck #5·#7** — 본 감사 통과와 별도로 투고 전 필수
 
 ## 다음 단계
 
-→ Sam Auto-Pilot ⑩ Final Verify의 표준 routine. Workshop에서는 verify-reference-essential 만으로 충분.
+→ 강사 본 파이프라인(sam-ai-autopilot 16단계)의 ⑩ Final Verify에 해당하는 사후 정밀 감사 routine (참가자 8단계 체계 밖). Workshop에서는 verify-reference-essential 만으로 충분.

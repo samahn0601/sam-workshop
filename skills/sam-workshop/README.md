@@ -1,32 +1,39 @@
-# Sam Workshop Skill Pack v1.2
+# Sam Workshop Skill Pack v1.4.0
 
 > 의대 교수 워크숍용 Claude Skill Pack (10:00–16:00, 5h 실습 + 1h 점심). 단계·시간 SSOT: `workshop/TIMETABLE.md` · `workshop/README.md`.
-> 단독저자 모드, Cowork-centered, HITL Dial 4-gate supervised 표준 + Medical Floor circuit breaker.
+> 단독저자 모드, Code 탭 중심, HITL Dial 4-gate supervised 표준 + Medical Floor circuit breaker.
+> v1.4.0 변경 (17-skill 3AI 고도화 사이클 + 평평 설치, 2026-06-10): **Scope-Fit Gate**(journal-fit-check 1.3 — desk-reject 1차 방어선) + Fit verdict downstream 5곳 배선(desk-reject #1 승계·critic Editor·hitl guardrail·scorecard 차원7·story-design) · fail-closed/INCOMPLETE 패턴 6 skill + verify-reference Degraded Mode · RH1–RH4 개명 · CONSORT 2025/SPIRIT 2025/TRIPOD+AI 갱신 · 모델명 generic화 · 경로 anchor `${CLAUDE_SKILL_DIR}/../_shared`(**평평 설치 표준** — Desktop Code 탭 실측 검증, 우산 폴더 미탐지) · `hitl_recommend.py` Fit Verdict Guardrail 구현(회귀 12종).
+> v1.3.1 변경 (Tier 1 통합 + 3AI hotfix, 2026-05-03): compliance_backend.py 신규 — G1 abstract / G2 body word-count / G2.6 citation–reference integrity (deterministic). desk-reject-precheck·verify-reference-essential를 hybrid(LLM+AST) 백엔드로 분할, status 3등급(Pass / Fix before self-deadline / Human review required), hitl-dial-recommender self-deadline 5–7일 체크리스트 추가.
 > v1.2 변경 (reference run 결과 반영): Step 8b 시간 분할 (5+20), figure-prompt-eng matplotlib fallback renderer 추가, paper_profile.target_audience_language 필드 추가 (한국 청중 한국어 문항집 default), hitl_recommend.py H3/H4 floor 메시지 분리, revision_backlog.jsonl 표준 포맷 명문화.
 > v1.1 변경 (이전): exam-item-builder + evidence-harvest-claim-bank 추가, hard floor override, manuscript versioning, 5h timetable reconciled.
 
 ## 설치
 
-### 옵션 A — 단순 폴더 복사 (권장 워크숍 표준)
+### 옵션 A — 평평(flat) 복사 (워크숍 표준 · Desktop Code 탭 실측 검증)
+
+⚠️ **우산 폴더 금지** — Code 탭 skill 탐지는 `.claude/skills/<skill>/SKILL.md` **1단계만** 인식. 본 폴더(sam-workshop)째 복사하면 2단계가 되어 17개 전부 미탐지(실측). **내용물**(17 skill 폴더 + `_shared`)을 `.claude/skills/` 바로 아래로:
 
 ```bash
-# 본 폴더(sam-workshop)를 ~/.claude/skills/ 안으로 복사
-# Mac/Linux:
-cp -R sam-workshop ~/.claude/skills/
+# Mac/Linux (작업 폴더 paper_home 기준 — 전역이면 ~/.claude/skills):
+mkdir -p <paper_home>/.claude/skills
+cp -R sam-workshop/. <paper_home>/.claude/skills/
 
 # Windows (PowerShell):
-Copy-Item -Recurse sam-workshop "$env:USERPROFILE\.claude\skills\"
+Copy-Item -Recurse -Force sam-workshop\* "<paper_home>\.claude\skills\"
 ```
 
-### 옵션 B — 심볼릭 링크 (개발용)
+권장 경로는 Code 탭 자연어 설치(`INSTALL.md` ④ 발화문 — clone→평평 복사를 Claude가 수행). 설치 후 **새 세션** 필요(skill은 세션 시작 시 스캔).
+
+### 옵션 B — 심볼릭 링크 (개발용 · skill별 개별 링크)
 
 ```bash
-ln -s "$(pwd)/sam-workshop" ~/.claude/skills/sam-workshop
+# 우산 링크(ln -s …/sam-workshop)는 2단계라 미탐지 — skill별로:
+cd sam-workshop && for d in */ ; do ln -s "$(pwd)/$d" ~/.claude/skills/"$d"; done
 ```
 
-설치 확인:
+설치 확인 (평평 — `.claude/skills/` 바로 아래):
 ```
-~/.claude/skills/sam-workshop/
+.claude/skills/
 ├── README.md (이 파일)
 ├── _shared/
 │   ├── schemas/ (3 JSON schemas)
@@ -53,7 +60,7 @@ ln -s "$(pwd)/sam-workshop" ~/.claude/skills/sam-workshop
 
 Claude Desktop 재시작 후 자연어로 skill 자동 발화 가능.
 
-## Skill Pack 구성 (17개, v1.1)
+## Skill Pack 구성 (17개)
 
 ### Tier 1 — 핵심 실습 (워크숍 시연·실습)
 
@@ -132,7 +139,7 @@ Claude Desktop 재시작 후 자연어로 skill 자동 발화 가능.
 
 ## 폴더 구조 표준
 
-각 논문 = Cowork Project 1개 = 로컬 폴더 1개:
+각 논문 = Code 탭 작업 폴더 1개 = 로컬 폴더 1개:
 
 ```
 paper_home/
@@ -158,7 +165,7 @@ paper_home/
 2. ★ Solo + Claude-only fallback (외부 엔진 못 쓸 때 Claude 다중 페르소나 대체)
 3. ★ Time-budget 3 모드 (workshop-mini / standard / deep-audit)
 4. 결정적 검증 vs LLM 추론 분리 (DOI/PMID/regex는 script, 의미는 LLM)
-5. Cowork 로컬 폴더 상대경로 표준화
+5. Code 탭 로컬 폴더 상대경로 표준화
 6. Structured output 표준 (issue table / scorecard / checklist / JSONL log)
 7. HITL Event Emit hook (모든 skill 종료 시 .sam/hitl/events.jsonl append)
 

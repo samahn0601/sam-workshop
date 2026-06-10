@@ -116,7 +116,7 @@ NBME 원칙 (절대 준수):
 - rationale_distractors: A: ..., B: ..., ... (각 오답이 왜 틀렸는가)
 - source: PMID 또는 가이드라인 (Manuscript 기반이면 본문 위치)
 - difficulty_estimate: easy / medium / hard
-- estimated_correct_pct: 학생 예상 정답률 (40–80% 권장)
+- estimated_correct_pct: 학생 예상 정답률 — **휴리스틱**(40–80%; 총괄평가 권장대는 60–85%, 40–60%는 고난도/형성평가로 태깅. 실제 난이도·변별도는 pilot 후 실측으로 대체)
 ```
 
 산출 → `paper_home/exam_items/exam_items.jsonl`
@@ -128,6 +128,7 @@ NBME 원칙 (절대 준수):
 NBME flaw checklist로 점검:
 
 Critical flaws (반드시 수정):
+- **unfocused stem — "cover the options" 위반** (선택지를 가리고 발문만 읽어도 답을 낼 수 있어야 함; 불가하면 재작성)
 - ambiguous stem (정답 결정 불가)
 - multiple correct answers
 - "all of the above" / "none of the above"
@@ -136,6 +137,7 @@ Critical flaws (반드시 수정):
 - 임상적 부정확
 
 Major flaws (개선 권고):
+- **test-wiseness cue** (정답 단서: stem 단어가 정답에 반복[clang], 절대어/빈도어 패턴, 선택지 간 포괄 관계)
 - 부정형 stem (NOT, EXCEPT)
 - 절대적 표현 (always, never)
 - 단순 암기형 (Bloom Remember만)

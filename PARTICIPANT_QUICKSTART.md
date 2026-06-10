@@ -20,19 +20,12 @@ Windows:     python --version; git --version
 
 ---
 
-## 워크숍 당일 — 4단계 (~5분)
+## 워크숍 당일 — 5단계 (~5분)
 
 ### ① Claude Desktop 앱 → **Code 탭** 열기
 로그인 후 상단 **Code** 탭. (Windows 첫 실행 시 Git 설치 안내 따르고 앱 재시작)
 
-### ② Plugin 설치 (+버튼>Plugins>Add plugin, 또는 명령)
-```
-/plugin marketplace add samahn0601/sam-workshop
-/plugin install sam-workshop@samahn0601
-```
-→ 17 skill + scripts 자동 설치.
-
-### ③ paper_home 초기화 (Code 탭 통합 터미널)
+### ② paper_home 초기화 (Code 탭 통합 터미널)
 
 🍎 **Mac**
 ```bash
@@ -44,7 +37,19 @@ irm https://raw.githubusercontent.com/samahn0601/sam-workshop/main/install/init-
 sam-init my_paper_2026
 ```
 
-### ④ paper_home 폴더로 세션 → 첫 발화
+### ③ Code 탭 **새 세션** → 작업 폴더 = `~/papers/my_paper_2026`
+
+### ④ Skill 설치 — 아래 발화문 그대로 붙여넣기
+
+```
+https://github.com/samahn0601/sam-workshop 를 clone해서, 그 안의 skills/sam-workshop/ 폴더에 있는
+17개 skill 폴더와 _shared 폴더를 지금 작업 폴더의 .claude/skills/ 바로 아래로 복사해줘.
+(우산 폴더 sam-workshop을 만들지 말 것 — 1단계가 되도록.) git이 없으면
+ZIP https://github.com/samahn0601/sam-workshop/archive/refs/heads/main.zip 으로.
+끝나면 .claude/skills/ 바로 아래 폴더 목록을 보여줘.
+```
+
+### ⑤ **새 세션 1회** → `/` 쳐서 17개 확인 → 첫 발화
 ```
 "내 논문 어느 저널에 투고할까?"
 ```
@@ -55,11 +60,11 @@ sam-init my_paper_2026
 ## 슬라이드 인쇄용 요약 (4줄)
 
 ```
-[Code 탭]  /plugin marketplace add samahn0601/sam-workshop
-[설치]     /plugin install sam-workshop@samahn0601
-[Mac]      bash <(curl -fsSL .../init-workshop-mac.sh) my_paper_2026
-[Windows]  irm .../init-workshop-windows.ps1 | iex; sam-init my_paper_2026
-[첫 발화]  "내 논문 어느 저널에 투고할까?"
+[터미널·Mac]  bash <(curl -fsSL .../init-workshop-mac.sh) my_paper_2026
+[터미널·Win]  irm .../init-workshop-windows.ps1 | iex; sam-init my_paper_2026
+[새 세션]     작업 폴더 = ~/papers/my_paper_2026
+[설치 발화]   "sam-workshop repo를 clone해서 17개 skill+_shared를 .claude/skills/ 바로 아래로" (우산 금지)
+[새 세션 후]  "/" 목록에 17개 확인 → "내 논문 어느 저널에 투고할까?"
 ```
 
 ---
@@ -69,8 +74,8 @@ sam-init my_paper_2026
 | 증상 | 1차 대응 |
 |---|---|
 | (Windows) Code 탭이 안 열림 | Git for Windows 설치 → 앱 완전 종료 후 재시작 |
-| "skill not found" | Code 탭 새 세션 |
-| Plugin install이 멈춤 | 인터넷 + GitHub access 확인 |
+| `/` 목록에 skill이 안 보임 | **새 세션**(설치한 세션에선 안 보임) + `.claude/skills/journal-fit-check`가 **1단계**인지 확인(우산 폴더 금지) |
+| 설치 발화가 멈춤 | 인터넷 + github.com 접근 확인 → 발화문의 ZIP 폴백 사용 |
 | `sam-init` 못 찾음 (Windows) | PowerShell 새 창에서 `irm ... \| iex` 다시 |
 | "pandoc not found" | preflight가 알려줌 → "docx 패키징은 homework"로 진행 |
 
@@ -78,19 +83,21 @@ sam-init my_paper_2026
 
 ---
 
-## Fallback — Plugin install이 안 되는 경우 (manual copy)
+## Fallback — 설치 발화 대신 터미널로 직접 복사
+
+⚠️ **우산 폴더 금지** — `skills/sam-workshop` 폴더째 복사하면 2단계가 되어 전부 미탐지(실측 확인). **내용물**을 `.claude/skills/` 바로 아래로:
 
 #### Mac
 ```bash
 git clone https://github.com/samahn0601/sam-workshop.git
-cp -R sam-workshop/skills/sam-workshop ~/.claude/skills/
-bash sam-workshop/install/init-workshop-mac.sh my_paper_2026
+mkdir -p ~/papers/my_paper_2026/.claude/skills
+cp -R sam-workshop/skills/sam-workshop/. ~/papers/my_paper_2026/.claude/skills/
 ```
 #### Windows (PowerShell)
 ```powershell
 git clone https://github.com/samahn0601/sam-workshop.git
-Copy-Item -Recurse sam-workshop\skills\sam-workshop "$env:USERPROFILE\.claude\skills\"
-.\sam-workshop\install\init-workshop-windows.ps1 -PaperName my_paper_2026
+New-Item -ItemType Directory -Force "$env:USERPROFILE\papers\my_paper_2026\.claude\skills" | Out-Null
+Copy-Item -Recurse -Force sam-workshop\skills\sam-workshop\* "$env:USERPROFILE\papers\my_paper_2026\.claude\skills\"
 ```
 
-`~/.claude/skills/`에 둔 skill은 Code 탭이 그대로 인식한다.
+복사 후 **새 세션**에서 `/` 목록 확인. (CLI·IDE 사용자만: `/plugin marketplace add samahn0601/sam-workshop` → `/plugin install sam-workshop@samahn0601` — Desktop Code 탭엔 `/plugin` 없음)
