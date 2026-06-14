@@ -21,7 +21,9 @@ description: >
 
 # start-here — 논문 파이프라인 진입점 (10-step 오케스트레이터)
 
-> 워크숍·논문 세션의 **첫 발화 진입점**. 한 번 부르면 (1) 10-step 맵 + 운전 모드 제시 → (2) `gate_plan.json` 작성 → (3) Step 1부터 각 단계 skill을 자동으로 이어 호출하며 안내한다. 참가자가 개별 skill 이름을 몰라도 흐름을 탄다. **단계별 정차(①⑤⑥⑩)·의학 floor는 유지** — "정지 없이 진행"이지 "검토 생략"이 아니다.
+> 워크숍·논문 세션의 **첫 발화 진입점**. 한 번 부르면 (1) 10-step 맵 + 운전 모드 제시 → (2) `gate_plan.json` 작성 → (3) Step 1부터 각 단계를 **반자동으로 안내**한다(다음 작업 skill을 호출하거나, 불확실하면 참가자가 입력할 명령을 제시). 참가자가 개별 skill 이름을 몰라도 흐름을 탄다.
+>
+> ⚠️ **"끝까지 무인 자동"이 아니다.** Claude Code에서 skill은 확정적 워크플로 엔진이 아니라 모델이 자연어/Skill tool로 트리거하는 비결정적 구조다. 그래서 start-here는 **각 단계를 안내하는 내비게이터** — 참가자가 **"다음"** 하기 전엔 다음 단계로 넘어가지 않는다(정차 ①⑤⑥⑩·의학 floor는 강제). "정지 없이 진행"이지 "검토 생략"이 아니다.
 
 ## 언제 부르나
 
@@ -48,12 +50,18 @@ description: >
 자연어로 모드를 받아 `.sam/hitl/gate_plan.json`(`gate_plan.schema.json`)에 저장. 기본값 🛡️표준(H3). **모드 선택 직후 책임 배너 1회**:
 > AI는 초안을, 저자는 책임을 집니다. 정차하지 않은 단계도 마지막 요약에서 반드시 확인합니다. (전체 배너 = `pipeline_map.md`)
 
-### 3) Step별 오케스트레이션 (핵심)
-각 step에서 해당 skill을 자동 호출하고, 완료되면 gate_plan을 참조해 **정차(review)** 또는 **정지 없이 진행(auto)**:
-- 정차 → 맵 갱신 + *"⑤ Verify 완료. [승인/수정/계속]?"* 입력 대기
-- 진행 → ✅ + 1줄 요약 후 **다음 step skill을 이어서 호출**
+### 3) Step별 반자동 내비게이션 (핵심)
+각 step **종료 시 반드시 다음 3줄을 출력**(종료 훅 — 참가자가 "지금 어디 있고 다음에 뭘 할지"를 항상 알게):
+```
+✅ [현재 단계] 완료 — [핵심 산출물 1줄]
+다음: [Step N+1 이름]  →  /[다음-skill-name]
+계속하려면 "다음"   (수정·재실행은 그대로 지시)
+```
+- 참가자가 **"다음"** 하기 전엔 다음 단계로 넘어가지 않는다(정차든 진행이든 동일 — 비개발자 통제감·교착 방지).
+- "다음" 입력 시 다음 단계 skill을 Skill tool로 호출한다. **호출이 불확실하면 멈추지 말고** *"`/[skill-name]` 을 입력하세요"* 로 정확한 명령을 제시(참가자가 막히지 않게).
+- gate_plan의 정차(review) 단계(①⑤⑥⑩)에선 [승인/수정/계속]을 명시적으로 받는다.
 
-| Step | 자동 호출 skill | 표준 정차 |
+| Step | 단계 skill / 도구 | 정차 |
 |---|---|---|
 | ① Idea Lock | journal-fit-check | ✋ Self-Gate A |
 | ② Deep Research | reporting-guideline-router (+ Chat Deep Research) | 진행 |
@@ -61,9 +69,9 @@ description: >
 | ④ Draft | (Code 파일 에디터) + section-boundary | 진행 |
 | ⑤ Verify | verify-reference-essential + stats-consistency | ✋ Self-Gate B |
 | ⑥ Critic | critic-multi-persona + scorecard-9d | ✋ Self-Gate C |
-| ⑦ Humanize & Package | humanize-ko/en + desk-reject-precheck (figure-prompt-eng 옵션) | 진행 * |
-| ⑧ Submission | submission worksheet + 포털 강사 데모 | 🔒 floor (사람) |
-| ⑨ Review Response | revision-response (가상 reviewer fixture → response matrix) | 🔒 floor (사람) |
+| ⑦ Humanize & Package | humanize-ko/en + desk-reject-precheck (figure-prompt-eng 옵션) | 진행 * (자동 점검 → ⑩서 최종 확인) |
+| ⑧ Submission | 🔒 **사람 주도** — submission worksheet 작성 + 포털 강사 데모 | floor (사람) |
+| ⑨ Review Response | 🔒 **사람 주도** — 가상 reviewer fixture → response matrix (revision-response 보조) | floor (사람) |
 | ⑩ Wrap & Next | hitl-dial-recommender → 🔒 Human Final Gate + 다음 dial | ✋ Human Final Gate |
 
 \* ⑦의 AI 공개문·cover letter는 표준 정차는 아니지만 **Publication Ethics floor**로 어떤 모드든 저자가 확인한다.

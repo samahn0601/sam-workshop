@@ -70,7 +70,7 @@ git이 없으면 ZIP https://github.com/samahn0601/sam-workshop/archive/refs/hea
 ```
 "시작하자"   (또는 "내 논문 어느 저널에 투고할까?")
 ```
-→ `start-here`가 10-step 맵·운전 모드 제시 → `gate_plan` 작성 → Step 1(`journal-fit-check`)부터 자동 안내.
+→ `start-here`가 10-step 맵·운전 모드 제시 → `gate_plan` 작성 → Step 1부터 각 단계를 안내(각 단계 끝에 **"다음"**으로 진행 — 한 번에 끝까지 자동이 아니라 단계별 내비게이션).
 
 ---
 
