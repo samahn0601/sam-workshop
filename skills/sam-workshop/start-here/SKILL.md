@@ -47,7 +47,30 @@ description: >
 현장은 2모드만 전면: **🛡️ 표준(정차 ①⑤⑥⑩)** / **⚡ 시간절약(①⑤⑩)**. 나머지(🚗전체정차·🏁최종집중·🎛️커스텀)는 1분 소개 후 사후 자산.
 
 ### 2) 모드 선택 → gate_plan 작성
-자연어로 모드를 받아 `.sam/hitl/gate_plan.json`(`gate_plan.schema.json`)에 저장. 기본값 🛡️표준(H3). **모드 선택 직후 책임 배너 1회**:
+자연어로 모드를 받아 `.sam/hitl/gate_plan.json`에 저장한다. **반드시 아래 형식(`gate_plan.schema.json` 준수)을 그대로 따른다** — 🛡️표준(H3) 예시를 복사해 모드에 맞게만 바꾸고, `mode`/`stops`/`selected_by` 같은 임의 필드는 만들지 않는다:
+
+```json
+{
+  "preset": "standard", "dial": "H3",
+  "medical_floor_override": true, "publication_ethics_floor": true, "submission_review_floor": true,
+  "soft_floor_steps": [1, 10],
+  "steps": [
+    {"n": 1, "name": "Idea Lock", "mode": "review", "locked_reason": "soft floor + Self-Gate A"},
+    {"n": 2, "name": "Deep Research", "mode": "auto"},
+    {"n": 3, "name": "Story & Outline", "mode": "auto"},
+    {"n": 4, "name": "Draft", "mode": "auto"},
+    {"n": 5, "name": "Verify", "mode": "review", "locked_reason": "Self-Gate B"},
+    {"n": 6, "name": "Critic", "mode": "review", "locked_reason": "Self-Gate C"},
+    {"n": 7, "name": "Humanize & Package", "mode": "auto"},
+    {"n": 8, "name": "Submission", "mode": "review", "locked_reason": "Submission floor (사람)"},
+    {"n": 9, "name": "Review Response", "mode": "review", "locked_reason": "Review floor (사람)"},
+    {"n": 10, "name": "Wrap & Next", "mode": "review", "locked_reason": "soft floor + Human Final Gate"}
+  ]
+}
+```
+> ⚡ 시간절약 = `preset:"light"`·`dial:"H2"`·정차 ①⑤⑩(⑥ Critic도 `"auto"`). 🚗 전체정차 = 전부 `"review"`. 기본값 🛡️표준(H3).
+
+**모드 선택 직후 책임 배너 1회**:
 > AI는 초안을, 저자는 책임을 집니다. 정차하지 않은 단계도 마지막 요약에서 반드시 확인합니다. (전체 배너 = `pipeline_map.md`)
 
 ### 3) Step별 반자동 내비게이션 (핵심)
