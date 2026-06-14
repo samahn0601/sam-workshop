@@ -8,7 +8,7 @@
 2. **When NOT to use** — 오발화 방지 (다른 skill이 더 적합한 경우 명시)
 3. **Input artifact** — 어떤 파일/내용을 입력으로 받는가
 4. **Output artifact** — 어떤 파일/구조를 산출하는가
-5. **Pipeline 위치** — sam-workshop 8-step 중 어디
+5. **Pipeline 위치** — sam-workshop 10-step 중 어디
 6. **Self-Gate** — A/B/C/D 중 어느 게이트
 7. **Medical context** — 의학 논문 특성 (예: 환자 안전, ICMJE, KAMJE)
 

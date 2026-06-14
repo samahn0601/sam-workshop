@@ -2,7 +2,7 @@
 name: hitl-dial-recommender
 description: >
   Two-way HITL control for the workshop pipeline. (A) At SESSION START: show the
-  8-step pipeline map (pipeline_map.md) and let the user pick a "운전 모드" (drive
+  10-step pipeline map (pipeline_map.md) and let the user pick a "운전 모드" (drive
   mode) — manual/standard/light/full_auto/custom — then write
   paper_home/.sam/hitl/gate_plan.json (gate_plan.schema.json) so each step stops
   (review) or passes (auto) as chosen. (B) At SESSION END or after each paper:
@@ -21,27 +21,27 @@ description: >
 
 # hitl-dial-recommender (Meta — session start + wrap + post-paper)
 
-> **양방향 HITL 운전.** (A) 세션 **시작**: 8단계 파이프라인 맵을 보여주고 운전 모드를 받아 `gate_plan.json` 작성. (B) 세션 **끝**: events.jsonl → 다음 논문 권장 Dial (H0–H4) **Lab Report**. 의학 floor (임상/약물/IRB/R6)는 모드·dial 무관 강제.
+> **양방향 HITL 운전.** (A) 세션 **시작**: 10단계 파이프라인 맵을 보여주고 운전 모드를 받아 `gate_plan.json` 작성. (B) 세션 **끝**: events.jsonl → 다음 논문 권장 Dial (H0–H4) **Lab Report**. 의학 floor (임상/약물/IRB/R6)는 모드·dial 무관 강제.
 
 ## 세션 시작 — Gate Plan 구성 (운전 모드 선택)
 
 워크숍/논문 세션 시작 시(Idea Lock 직전) 수행:
 
-1. `${CLAUDE_SKILL_DIR}/../_shared/templates/pipeline_map.md`의 8단계 맵 + 운전 모드 표를 보여준다. (공유 자산은 형제 폴더 `_shared` — 변수 미확장 시 Claude가 절대경로 치환)
+1. `${CLAUDE_SKILL_DIR}/../_shared/templates/pipeline_map.md`의 10단계 맵 + 운전 모드 표를 보여준다. (공유 자산은 형제 폴더 `_shared` — 변수 미확장 시 Claude가 절대경로 치환)
 2. 사용자가 자연어로 모드를 고르게 한다 (예: "표준", "다 맡기고 끝에만", "③⑤만 내가"). 기본값 🛡️표준(H3).
 3. 선택을 `paper_home/.sam/hitl/gate_plan.json` (`gate_plan.schema.json` 형식)으로 저장한다.
 4. 이후 각 step 종료 시 Code 탭 project instructions(CLAUDE.md)의 gate_plan 참조 규칙에 따라 정지(`review`)/자동(`auto`)이 동작한다.
 
 | 운전 모드 | dial | 정차 단계 | 노출 |
 |---|---|---|---|
-| 🛡️ 표준 *(기본)* | H3 | ①③⑤⑥⑦ | 현장 기본 |
-| ⚡ 시간절약 | H2 | ①⑤⑦ | 현장 옵션 |
-| 🚗 전체 정차 | H4 | ①~⑧ 전부 | 강사 데모 |
-| 🏁 최종 집중 | H1 | ①⑦ | 사후 자산 |
-| 🎛️ 커스텀 | — | 지정 (①⑦은 ⭐ 최소 유지) | 사후 자산 |
+| 🛡️ 표준 *(기본)* | H3 | ①⑤⑥⑩ | 현장 기본 |
+| ⚡ 시간절약 | H2 | ①⑤⑩ | 현장 옵션 |
+| 🚗 전체 정차 | H4 | ①~⑩ 전부 | 강사 데모 |
+| 🏁 최종 집중 | H1 | ①⑩ | 사후 자산 |
+| 🎛️ 커스텀 | — | 지정 (①⑩은 ⭐ 최소 유지) | 사후 자산 |
 
-> ⭐ **Soft floor ①⑦**: 어떤 모드든 최소 1회 저자 확인 (① 주제·저널 확정[교육], ⑦ AI 공개문·cover letter[윤리]).
-> 🔒 **2 Floor 자동 정차**(gate_plan 우선): **Medical Safety**(약물·IRB·임상권고·R6) + **Publication Ethics**(AI 공개문·authorship·COI·저널정책).
+> ⭐ **Soft floor ①⑩**: 어떤 모드든 최소 1회 저자 확인 (① 주제·저널 확정[교육], ⑩ Wrap = Human Final Gate[본인 최종 검증·제출]). ⑦ AI 공개문·cover letter는 Publication Ethics floor로 확인.
+> 🔒 **3 Floor 자동 정차**(gate_plan 우선): **Medical Safety**(약물·IRB·임상권고·R6) + **Publication Ethics**(AI 공개문·authorship·COI·저널정책) + **⑧⑨ Submission/Review**(자격증명·Submit·실제 리뷰 원문 = 사람).
 > 용어: "auto/풀오토" 대신 **"정지 없이 진행"**(요약 확인·저자 책임 유지). 현장은 🛡️표준+⚡시간절약 2개만, 나머지는 사후 자산으로 소개.
 > 시작에서 모드를 고르고(이 절), 끝에서 다음 논문 모드를 처방받는다(아래 dial 권고) — 양방향 루프.
 
@@ -49,10 +49,10 @@ description: >
 
 | Dial | 이름 | 의미 | 권고 대상 |
 |---|---|---|---|
-| **H4** | 8-gate hand-holding | 8 step 모두 human gate | 초보, 고위험, 이전 hallucination 多 |
-| **H3** | 4-gate standard | A/B/C/D Self-Gate | **워크숍 default** |
+| **H4** | 10-gate hand-holding | 10 step 모두 human gate | 초보, 고위험, 이전 hallucination 多 |
+| **H3** | 4-gate standard | ①⑤⑥⑩ 정차 | **워크숍 default** |
 | **H2** | 2-gate accelerated | Design + Verify/Critic gate | 경험자, 저위험 |
-| **H1** | 1-gate Auto-Pilot | 제출 전 final human gate | 사전검토, 내부문서 |
+| **H1** | 1-gate Auto-Pilot | ⑩ Human Final Gate (제출 전 최종) | 사전검토, 내부문서 |
 | **H0** | 0-gate Sakana style | autonomous run | 의학 논문 제출용 **비권장** |
 
 ## 모드
@@ -97,11 +97,11 @@ python ${CLAUDE_SKILL_DIR}/../_shared/scripts/hitl_recommend.py \
 - [ ] 다음 논문에서 강화/완화할 영역
 - [ ] 처방전 본인 노트 추가
 
-### Step 3 (2분) — 다음 논문 setup + 자가-마감 5–7일 체크리스트 생성
+### Step 3 (2분) — 다음 논문 setup + ⑩ Human Final Gate 체크리스트 생성
 
 다음 논문 paper_home 생성 시 권고 dial을 starting point로.
 
-**v1.3 신규**: workshop wrap 마지막에 본 워크숍 산출물에 대한 **자가-마감 5–7일 체크리스트**를 자동 생성:
+**v1.3 신규**: workshop wrap(⑩) 마지막에 본 워크숍 산출물에 대한 **🔒 Human Final Gate 체크리스트**를 자동 생성:
 
 ```bash
 python ${CLAUDE_SKILL_DIR}/../_shared/scripts/hitl_recommend.py \
@@ -111,9 +111,9 @@ python ${CLAUDE_SKILL_DIR}/../_shared/scripts/hitl_recommend.py \
   --self-deadline-out paper_home/08_package/self_deadline_checklist.md
 ```
 
-`self_deadline_checklist.md`는 워크숍 산출물이 **submission-directed**임을 강조하고, 5–7일 사이 본인이 수정/검증해야 할 작업을 행동 단위로 나열. 본 파이프라인의 `last_5min_checklist.py` 템플릿을 응용했지만 의미가 다름:
+`self_deadline_checklist.md`(파일명 유지)는 ⑩ **Human Final Gate** 체크리스트 — 워크숍 산출물이 **submission-directed ≠ submission-ready**임을 강조하고, 제출 버튼을 누르기 전 본인이 최종 검증·승인해야 할 작업을 행동 단위로 나열. 본 파이프라인의 `last_5min_checklist.py` 템플릿을 응용했지만 의미가 다름:
 - 본 파이프라인 last_5min: "제출 직전 5분 체크"
-- 워크숍 self-deadline: "**자가-마감 5–7일 동안 반드시 통과해야 할 항목**"
+- 워크숍 Human Final Gate: "**제출 전 본인이 반드시 통과시켜야 할 항목 (시점 아닌 본인 책임 기준)**"
 
 ## 권고 알고리즘 (요약)
 
@@ -153,7 +153,7 @@ score = 25 × severe_hallucination_rate
 
 → Score 기반 dial과 guardrail 중 더 높은 쪽 채택.
 
-## Output 표준 (Lab Report + Self-Deadline Checklist)
+## Output 표준 (Lab Report + Human Final Gate Checklist)
 
 ### 1) `dial_recommendation.md` (기존)
 
@@ -201,47 +201,46 @@ score = 25 × severe_hallucination_rate
 - 누적 3편 깨끗하게 끝나면 한 단계 dial 낮춤 검토
 ```
 
-### 2) `self_deadline_checklist.md` (v1.3 신규, `paper_home/08_package/`)
+### 2) `self_deadline_checklist.md` (⑩ Human Final Gate 체크리스트, `paper_home/08_package/` — 파일명은 호환 위해 유지)
 
 ```markdown
-# 🗓️ 자가-마감 체크리스트 (Self-Deadline, 5–7일)
+# 🔒 Human Final Gate 체크리스트
 
-**Generated:** 2026-06-20 16:00 KST
+**Generated:** 2026-06-20 (워크숍 wrap)
 **Paper:** paper-2026-001 / Brief Report / JKMS
-**자가-마감일:** 2026-06-25 ~ 2026-06-27
 
 > **워크숍 산출물 = submission-directed ≠ submission-ready.**
-> 본 체크리스트는 워크숍 6시간 동안 통과한 항목을 5–7일 후 본인이 한 번 더 검증하도록 설계.
+> 워크숍 6시간 동안 통과한 항목을 제출 버튼을 누르기 전 본인이 최종 검증·승인한다. (시점 아닌 본인 책임 기준)
 
 ---
 
-## ① 본인 사실 검증 (의학 floor — 1일차 권장)
+## ① 본인 사실 검증 (의학 floor)
 - [ ] Mortality / safety / guideline claim 직접 full text 확인
 - [ ] 약물 용량 / 상호작용 — 본인 1차자료 확인
 - [ ] IRB 진술 — 승인 기관, 일자, 환자동의 면제 사유 확인
 
-## ② Reporting checklist 부착 (1–2일차)
+## ② Reporting checklist 부착
 - [ ] STROBE / CONSORT / CARE / PRISMA / STARD / TRIPOD PDF 첨부
 - [ ] checklist의 모든 item이 manuscript에 어디 있는지 row 기재
 
-## ③ AI Use Disclosure 정확성 (2일차)
+## ③ AI Use Disclosure 정확성
 - [ ] 실제 사용한 AI 도구·모델명·버전·사용 날짜를 **정확히** 기록 (본인이 채움 — 추정 금지, 저널 지침 우선)
 - [ ] 어느 단계에서 사용했는지 (draft / verify / critic / figure / 통계)
 - [ ] 본인이 검증한 항목 명시
 
-## ④ 결정적 검증 결과 재확인 (3–4일차)
+## ④ 결정적 검증 결과 재확인
 - [ ] G1 abstract word count: AST {abstract_count}/{abstract_max} ✓
 - [ ] G2 body word count: AST {body_count}/{body_max} ✓
 - [ ] G2.6 ghost/orphan: ghosts={ghosts} orphans={orphans}
 - [ ] R5 retracted citation 0건
 - [ ] R6 mortality/safety claim — 본인 abstract+full text 통과
 
-## ⑤ 통계 정합성 재확인 (4–5일차)
+## ⑤ 통계 정합성 재확인
 - [ ] Abstract 수치 = Results 수치 = Table 수치 (3-way agreement)
 - [ ] CI / p-value 표기 일관성
 - [ ] denominator / N 명시
 
-## ⑥ 투고 직전 (5–7일차)
+## ⑥ 투고 직전 (제출 전 최종)
 - [ ] 1차 저널 spec 최신 버전 재확인 (변경 가능성)
 - [ ] Cover letter — 본인 sender info / reviewer 추천 (있으면)
 - [ ] Blinded version identity scrub (이름/소속 0 hits)

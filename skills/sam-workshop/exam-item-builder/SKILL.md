@@ -7,12 +7,12 @@ description: >
   rationales for each distractor, and source/guideline linkage. Trigger when
   user says "시험문제 생성", "exam questions", "MCQ 만들어줘", "문항 만들기",
   "강의 시험문제", "OSCE", "USMLE 스타일", "KMLE 스타일", "Bloom level",
-  "rationale", or operates near workshop wrap or after Step 8 manuscript draft.
+  "rationale", or operates near workshop wrap (Step 10) or once the manuscript draft is underway.
   Do not use for paper drafting (use story-design or humanize-en/ko) or
   reference verification (use verify-reference-essential). Input:
   paper_home/00_intake/lecture_slides.pdf (또는 본 manuscript) + (선택) learning
   objectives. Output: paper_home/exam_items/{exam_items.jsonl, exam_items.md,
-  item_flaw_report.md}. Pipeline position: parallel during lunch break + Step 8
+  item_flaw_report.md}. Pipeline position: parallel during lunch break + Step 10
   wrap. Medical context: NBME 'Constructing Written Test Questions for the
   Basic and Clinical Sciences' item-writing principles, Bloom's taxonomy,
   Miller's pyramid (knows / knows how / shows how / does), USMLE/KMLE
@@ -268,7 +268,7 @@ E. Insulin glargine
 
 **점심 후 (13:00)**: LO 검토 → 2–3단계 발화 → Step 4 Draft와 병행
 
-**Step 8 wrap (15:30 경)**: 최종 검토 + flaw 수정
+**Step 10 wrap (15:30 경)**: 최종 검토 + flaw 수정
 
 → 총 점유 시간 25–30분, 워크숍 main flow에 영향 최소화
 

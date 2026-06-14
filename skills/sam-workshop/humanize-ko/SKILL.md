@@ -196,4 +196,4 @@ In-place edit + diff 표:
 
 ## 다음 단계
 
-→ Step 4의 drift check 완료 → desk-reject-precheck (Step 7 quick scan) → Step 8 Wrap & Next
+→ Step 4의 drift check 완료 → desk-reject-precheck (Step 7 quick scan) → Step 10 Wrap & Next

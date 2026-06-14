@@ -244,4 +244,4 @@ EOF
 
 ## 다음 단계
 
-→ Step 7 Humanize & Package로 복귀 (figure brief는 step 7의 옵션) → Step 8 Wrap & Next. 렌더링 미완 figure는 homework.
+→ Step 7 Humanize & Package로 복귀 (figure brief는 step 7의 옵션) → Step 10 Wrap & Next. 렌더링 미완 figure는 homework.

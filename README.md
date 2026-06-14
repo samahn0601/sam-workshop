@@ -2,11 +2,12 @@
 
 > 작성: 2026-04-28 / 갱신: 2026-04-30 (v1.2 reference-run) / 2026-05-31 (6/20 운영 정본 정합)
 > 워크숍 일정: 2026-06-20 (토) **10:00–16:00** (+16:00–16:15 optional Q&A)
-> **5h 실습 + 1h 점심 일정.** 단독저자 모드. Deliverable: submission-directed draft package + (선택) AI-assisted item bank + 17 skill 영구 설치
+> **5h 실습 + 1h 점심 일정.** 단독저자 모드. Deliverable: **논문 lifecycle 전체 한 바퀴**(작성 → submit 직전 제출 패키지 → 리뷰 대응 연습) + (선택) AI-assisted item bank + 17 skill 영구 설치
 > 타임라인 SSOT: [TIMETABLE.md](TIMETABLE.md) · 당일 운영: [D_DAY_RUNBOOK](D_DAY_RUNBOOK_20260620.md) / [BLUEPRINT](WORKSHOP_EXECUTION_BLUEPRINT_20260620.md)
 
 ## 현 상태 (D-20, 6/20 운영 정본 확정)
 
+- **2026-06-13 (D-7) lifecycle 전환**: "초안에서 멈춤(submission-ready 아님·5–7일 후 마감)" 폐기 → 작성 8-step을 압축하고 **⑧ Submission·⑨ Review를 추가한 10-step lifecycle 부트캠프**로 재설계. 도달점 = submit 버튼 직전 + 리뷰 대응 연습. 안전선 = **Human Final Gate**(시점 표현 삭제, 본인 최종 검증·제출 책임은 유지). 3AI 3/3(sha8 `e0e3da8b`). ⚠️ Verify/Critic 깊이↓·완주율↓ trade-off 수용(성격: 깊은 작성 → lifecycle 부트캠프).
 - **2026-05-31 (D-20)**: 타임라인·파이프라인 라벨을 6/20 운영 정본(10:00–16:00, 8-step + Bonus)으로 정합 완료 — TIMETABLE / skill README / OT slide·script 동기화. **아래 항목은 개발 이력**(8b 분할 등은 v1.2 시점, 운영본에서 step 7/Bonus로 재배치됨).
 - **Skill Pack v1.2 완성** (17 skills + 5 schemas + 4 scripts + 5 templates) → `skills/sam-workshop/`
 - **v1.3 포팅 plan 채택 (2026-05-03)** — 본 파이프라인(autopilot+collab) v1.2 패치 일부를 워크숍 백엔드로 흡수. 3AI 합의 도출, Tier 1/2/3 분류, dry-run 5월 중순 예정. **상세: [handoff_20260503_v1_3_plan.md](handoff_20260503_v1_3_plan.md)**
@@ -22,12 +23,12 @@
 
 ## 한 줄 요약
 
-Sam AI Pipeline (16-step Auto-Pilot/Collab)을 **단독저자 + Claude Desktop Code 탭 중심 + 4 Self-Gate supervised** 모드로 다이어트한 8-step 파이프라인. Claude 주력 + GPT-5.5 critic + GPT-image-2/Nano Banana 2 figure 병렬. 무료 티어 활용 권장.
+Sam AI Pipeline (16-step Auto-Pilot/Collab)을 **단독저자 + Claude Desktop Code 탭 중심 + 4 Self-Gate supervised** 모드로 다이어트하되, **lifecycle 전체를 한 바퀴 도는 10-step**(작성 ①~⑦ + ⑧ Submission + ⑨ Review + ⑩ Wrap). Claude 주력 + GPT-5.5 critic + GPT-image-2/Nano Banana 2 figure 병렬. 무료 티어 활용 권장.
 
 ## 목표 산출물 (참가자 1인당)
 
-1. **submission-directed draft package** (5–7일 내 본인 마감 가능 형태)
-   - Letter / Commentary / Case Report / Editorial: 본문 + cover letter + checklist
+1. **submit 직전까지의 제출 패키지(연습본) + 리뷰 대응 연습** — 실제 제출은 **Human Final Gate**(원자료·참고문헌·저자 전원 승인·IRB·COI·funding·AI공개·표절·저널 checklist 본인 확인) 통과 후 본인이 누른다
+   - Letter / Commentary / Case Report / Editorial: 본문 + cover letter + checklist + submission worksheet
    - Narrative Review: 1차 outline + 2 핵심 섹션 draft
    - Original (Brief Report): IMRaD 골격 + Discussion 1차
 2. **본인 강의 시험문제 20–30문항**
@@ -42,7 +43,7 @@ Sam AI Pipeline (16-step Auto-Pilot/Collab)을 **단독저자 + Claude Desktop C
 - **무료 티어 보조 멀티엔진** — Claude Pro 필수, GPT/Gemini 무료 OK
 - **Frontier 인식** — Sakana AI Scientist (Nature 2026.3), Google PaperOrchestra (2026.4) hook으로 supervised semi-automation 정직 포지셔닝
 
-## 정본 파이프라인 (메인 8-step + Bonus 병행 트랙)
+## 정본 파이프라인 (메인 10-step: 작성 ①~⑦ + ⑧ Submission + ⑨ Review + ⑩ Wrap, + Bonus 병행)
 
 > 이 절이 **파이프라인 단계 정의 SSOT**다. 시간 배치는 [TIMETABLE.md](TIMETABLE.md), 당일 카드는 [FACILITATOR_PROMPT_CARD](FACILITATOR_PROMPT_CARD_20260620.md). 모든 발표/대본 자료(OT slide·OT script)는 이 라벨을 따른다.
 
@@ -63,10 +64,17 @@ FINISH
   7. Humanize & Package         [humanize-en/ko + desk-reject-precheck
                                  + cover letter + AI disclosure]  [Self-Gate D]
                                  (figure brief 옵션: figure-prompt-eng)
-  8. Wrap & Next                [hitl-dial-recommender →
-                                 self-deadline checklist + 다음 논문 dial]
+SUBMIT & REVIEW  (lifecycle 뒷단 — 사람 주도)
+  8. Submission                 [submission_portal_adapter → submission
+                                 worksheet 전원 작성 + 포털 강사 데모(녹화)
+                                 · 🔒 Submit·로그인·자격증명 = 사람]
+  9. Review Response            [가상 reviewer fixture → response matrix
+                                 + rejection_resubmit 경로 A/B/C]
+CLOSE
+ 10. Wrap & Next                [hitl-dial-recommender →
+                                 🔒 Human Final Gate checklist + 다음 논문 dial]
 
-+ Bonus track (병행·선택): 목업 통계 흐름 / 강의자료 기반 시험문항 초안
++ Bonus (선택·시간 여유 시): 목업 통계 흐름 / 강의자료 기반 시험문항 초안
 ```
 
 > **Figures는 메인 블록이 아니다** — 당일은 step 7에서 figure brief/caption만, 렌더링은 homework. 옛 v1.2의 "step 7 = Figures(병렬)" 라벨이 10:00–16:00 운영 흐름과 어긋나 step 7(Humanize & Package)에 흡수하고, Wrap을 step 8로 승격했다.

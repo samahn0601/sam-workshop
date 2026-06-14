@@ -12,8 +12,8 @@
     {
       "name": "sam-workshop",
       "source": "./",
-      "description": "의대 단독저자 워크숍 17 skill pack — 8-step 파이프라인(journal-fit-check ~ hitl-dial-recommender), HITL 단계별 운전 모드(gate_plan), Medical Safety + Publication Ethics floor, reference 검증(R1-R6), hybrid LLM+AST compliance backend, self-deadline 체크리스트.",
-      "version": "1.4.1"
+      "description": "의대 단독저자 워크숍 18 skill pack (진입점 start-here + 작업 17) — 10-step lifecycle 파이프라인(start-here → journal-fit-check ~ hitl-dial-recommender), HITL 단계별 운전 모드(gate_plan), Medical Safety + Publication Ethics + ⑧⑨ Submission/Review floor, reference 검증(R1-R6), hybrid LLM+AST compliance backend, Human Final Gate 체크리스트.",
+      "version": "1.5.0"
     }
   ]
 }

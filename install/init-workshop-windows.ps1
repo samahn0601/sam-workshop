@@ -43,7 +43,7 @@ function Invoke-SamWorkshopInit {
     $PaperHome = Join-Path $PapersDir $PaperName
     $PluginBase = Join-Path $env:USERPROFILE ".claude\plugins\sam-workshop"
     $LegacyUmbrella = Join-Path $env:USERPROFILE ".claude\skills\sam-workshop"
-    # v1.4: flat install is the workshop standard - 17 skills + _shared directly under .claude\skills\
+    # v1.4: flat install is the workshop standard - 18 folders (start-here + 17 task) + _shared directly under .claude\skills\
     $FlatProject = Join-Path (Get-Location).Path ".claude\skills"
     $FlatGlobal = Join-Path $env:USERPROFILE ".claude\skills"
 
@@ -72,7 +72,7 @@ function Invoke-SamWorkshopInit {
     } elseif (Test-Path $LegacyUmbrella -PathType Container) {
         $SkillBase = $LegacyUmbrella
         Write-Warn2 "Umbrella copy detected: $LegacyUmbrella"
-        Write-Warn2 "Desktop Code tab does NOT detect this depth (2-level). Move the 17 skill"
+        Write-Warn2 "Desktop Code tab does NOT detect this depth (2-level). Move the 18 skill"
         Write-Warn2 "folders + _shared directly under .claude\skills\ (see INSTALL.md Fallback)."
     } else {
         Write-Warn2 "skill pack not found yet - paper_home will still be created."

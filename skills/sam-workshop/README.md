@@ -1,10 +1,11 @@
-# Sam Workshop Skill Pack v1.4.1
+# Sam Workshop Skill Pack v1.5.0
 
 > 의대 교수 워크숍용 Claude Skill Pack (10:00–16:00, 5h 실습 + 1h 점심). 단계·시간 SSOT: `workshop/TIMETABLE.md` · `workshop/README.md`.
 > 단독저자 모드, Code 탭 중심, HITL Dial 4-gate supervised 표준 + Medical Floor circuit breaker.
+> v1.5.0 변경 (2026-06-14): **start-here 진입점 skill 추가**(작업 17 + 진입점 1 = 18) — "시작하자" 한 번으로 10-step 흐름 자동 안내(HITL 정차 ①⑤⑥⑩·의학 floor 유지). + **lifecycle 전환**(8→10-step: ⑧ Submission·⑨ Review·⑩ Wrap, self-deadline → Human Final Gate).
 > v1.4.1 변경 (2026-06-10): **R5b Crossref retraction 교차** — `ref_verify_pubmed.py`에 `crossref_retraction_check()` 신설(`updates:DOI` 필터 + 제목 prefix). PMID 없는 비-MEDLINE 문헌도 DOI만으로 철회 확인, 확인 불가 시 `[R5B_UNCHECKED]`(fail-closed, PASS 집계 금지). 라이브 검증: Wakefield 1998 → retraction notice 2건 검출.
 > v1.4.0 변경 (17-skill 3AI 고도화 사이클 + 평평 설치, 2026-06-10): **Scope-Fit Gate**(journal-fit-check 1.3 — desk-reject 1차 방어선) + Fit verdict downstream 5곳 배선(desk-reject #1 승계·critic Editor·hitl guardrail·scorecard 차원7·story-design) · fail-closed/INCOMPLETE 패턴 6 skill + verify-reference Degraded Mode · RH1–RH4 개명 · CONSORT 2025/SPIRIT 2025/TRIPOD+AI 갱신 · 모델명 generic화 · 경로 anchor `${CLAUDE_SKILL_DIR}/../_shared`(**평평 설치 표준** — Desktop Code 탭 실측 검증, 우산 폴더 미탐지) · `hitl_recommend.py` Fit Verdict Guardrail 구현(회귀 12종).
-> v1.3.1 변경 (Tier 1 통합 + 3AI hotfix, 2026-05-03): compliance_backend.py 신규 — G1 abstract / G2 body word-count / G2.6 citation–reference integrity (deterministic). desk-reject-precheck·verify-reference-essential를 hybrid(LLM+AST) 백엔드로 분할, status 3등급(Pass / Fix before self-deadline / Human review required), hitl-dial-recommender self-deadline 5–7일 체크리스트 추가.
+> v1.3.1 변경 (Tier 1 통합 + 3AI hotfix, 2026-05-03): compliance_backend.py 신규 — G1 abstract / G2 body word-count / G2.6 citation–reference integrity (deterministic). desk-reject-precheck·verify-reference-essential를 hybrid(LLM+AST) 백엔드로 분할, status 3등급(Pass / Fix before final gate / Human review required), hitl-dial-recommender Human Final Gate 체크리스트 추가.
 > v1.2 변경 (reference run 결과 반영): Step 8b 시간 분할 (5+20), figure-prompt-eng matplotlib fallback renderer 추가, paper_profile.target_audience_language 필드 추가 (한국 청중 한국어 문항집 default), hitl_recommend.py H3/H4 floor 메시지 분리, revision_backlog.jsonl 표준 포맷 명문화.
 > v1.1 변경 (이전): exam-item-builder + evidence-harvest-claim-bank 추가, hard floor override, manuscript versioning, 5h timetable reconciled.
 
@@ -12,7 +13,7 @@
 
 ### 옵션 A — 평평(flat) 복사 (워크숍 표준 · Desktop Code 탭 실측 검증)
 
-⚠️ **우산 폴더 금지** — Code 탭 skill 탐지는 `.claude/skills/<skill>/SKILL.md` **1단계만** 인식. 본 폴더(sam-workshop)째 복사하면 2단계가 되어 17개 전부 미탐지(실측). **내용물**(17 skill 폴더 + `_shared`)을 `.claude/skills/` 바로 아래로:
+⚠️ **우산 폴더 금지** — Code 탭 skill 탐지는 `.claude/skills/<skill>/SKILL.md` **1단계만** 인식. 본 폴더(sam-workshop)째 복사하면 2단계가 되어 전부 미탐지(실측). **내용물**(진입점 start-here + 작업 skill 17 + `_shared` = 18 폴더)을 `.claude/skills/` 바로 아래로:
 
 ```bash
 # Mac/Linux (작업 폴더 paper_home 기준 — 전역이면 ~/.claude/skills):
@@ -40,6 +41,7 @@ cd sam-workshop && for d in */ ; do ln -s "$(pwd)/$d" ~/.claude/skills/"$d"; don
 │   ├── schemas/ (3 JSON schemas)
 │   ├── scripts/ (3 Python scripts)
 │   └── templates/ (4 markdown templates)
+├── start-here/SKILL.md                       ★ 진입점 (한 번 부르면 흐름 시작)
 ├── journal-fit-check/SKILL.md
 ├── story-design/SKILL.md
 ├── verify-reference-essential/SKILL.md
@@ -61,7 +63,15 @@ cd sam-workshop && for d in */ ; do ln -s "$(pwd)/$d" ~/.claude/skills/"$d"; don
 
 Claude Desktop 재시작 후 자연어로 skill 자동 발화 가능.
 
-## Skill Pack 구성 (17개)
+## Skill Pack 구성 (진입점 1 + 작업 17)
+
+### 🚀 진입점 (Entry) — 한 번 부르면 전체 흐름 시작
+
+| Skill | 역할 |
+|---|---|
+| **start-here** ★NEW | 10-step 맵·운전 모드 제시 → `gate_plan` 작성 → Step 1부터 각 작업 skill을 자동 호출·안내. 참가자가 작업 skill 이름을 몰라도 흐름을 탄다(정차 ①⑤⑥⑩·의학 floor 유지). 첫 발화: **"시작하자"** / "어디서부터" |
+
+> 아래 **작업 skill 17개**는 외울 필요 없이 start-here가 단계마다 자동 호출한다. (원하면 이름으로 직접 호출도 가능)
 
 ### Tier 1 — 핵심 실습 (워크숍 시연·실습)
 
@@ -116,8 +126,8 @@ Claude Desktop 재시작 후 자연어로 skill 자동 발화 가능.
 
 > **시간표 SSOT는 `workshop/TIMETABLE.md`** (10:00–16:00 운영 정본). 갈라짐 방지를 위해 여기서 중복 유지하지 않는다.
 >
-> 정본 파이프라인: **1 Idea Lock → 2 Deep Research → 3 Story & Outline → 4 Draft → 5 Verify → 6 Critic → 7 Humanize & Package → 8 Wrap & Next** (+ Bonus 병행).
-> 각 skill이 어느 step에 쓰이는지는 위 "Skill Pack 구성" 표 참조. (figure-prompt-eng = step 7 옵션, exam-item-builder = 점심 백그라운드 + Bonus, hitl-dial-recommender = step 8)
+> 정본 파이프라인: **1 Idea Lock → 2 Deep Research → 3 Story & Outline → 4 Draft → 5 Verify → 6 Critic → 7 Humanize & Package → 8 Submission → 9 Review Response → 10 Wrap & Next** (+ Bonus 병행).
+> 각 skill이 어느 step에 쓰이는지는 위 "Skill Pack 구성" 표 참조. (figure-prompt-eng = step 7 옵션, exam-item-builder = 점심 백그라운드 + Bonus, hitl-dial-recommender = step 10)
 
 ## Skill 사용 예 (자연어 트리거)
 
@@ -186,13 +196,13 @@ paper_home/
 | **A_design** | Step 1+3 후 | journal locked, outline 통과, evidence map 작성 |
 | **B_draft** | Step 5 후 | verify-reference-essential PASS, stats-consistency 정당화 |
 | **C_verify_critic** | Step 6 후 | scorecard-9d ≥ 32, 차원 9 = Pass |
-| **D_finish** | Step 7 후 | scorecard-9d ≥ 36, desk-reject-precheck 0 critical fail |
+| **D_finish** | Step 7 후 | scorecard-9d ≥ 36, desk-reject-precheck 0 critical fail (작성 완료 게이트 — 제출 전 최종 검증·제출은 ⑩ Human Final Gate) |
 
 ## HITL Dial 5단계
 
 | Dial | 이름 | 워크숍 사용 |
 |---|---|---|
-| H4 | 8-gate hand-holding | 초보자 옵션 |
+| H4 | 10-gate hand-holding | 초보자 옵션 |
 | **H3** | 4-gate standard | **워크숍 default** |
 | H2 | 2-gate accelerated | 경험자 옵션 |
 | H1 | 1-gate Auto-Pilot | 워크숍 미사용 (사후 옵션) |
@@ -210,7 +220,7 @@ paper_home/
 - [ ] Reference run 1회 (Letter 1편) — skill 자동 트리거 정확도 측정
 - [ ] Skill description benchmark 30개씩 (skill-creator 적용)
 - [ ] 한국 의대 교수 자주 투고 저널 5–10개 specs 사전 정비
-- [ ] 워크숍 슬라이드 v3 제작 (8-step diagram)
+- [ ] 워크숍 슬라이드 v3 제작 (10-step diagram)
 - [ ] 참가자 사전 안내문 작성
 
 ## 문의 / 개선 제안

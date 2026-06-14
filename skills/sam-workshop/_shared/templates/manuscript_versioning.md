@@ -10,7 +10,7 @@
 04_draft/manuscript_v0.1_draft.md           ← Step 4 초고 (Code 탭 작업본의 첫 snapshot)
 05_verify/manuscript_v0.2_verified.md        ← Step 5 verify 후 수정 반영
 06_critic/manuscript_v0.3_revised.md         ← Step 6 critic 채택 사항 반영
-08_package/manuscript_v0.4_humanized.md      ← Step 8 humanize 후
+08_package/manuscript_v0.4_humanized.md      ← Step 7 humanize 후
 08_package/manuscript_v0.4.1_driftchecked.md ← humanize 후 R6/locked claim 재검증 통과
 ```
 
@@ -89,7 +89,7 @@ manuscript_v{major}.{minor}[_{tag}].md
 
 `evidence-harvest-claim-bank`가 high-risk claim 자동 lock 후보 표시 → 본인 확정.
 
-## Drift Check (Step 8 Humanize 후 필수)
+## Drift Check (Step 7 Humanize 후 필수)
 
 `humanize-en` 또는 `humanize-ko` 종료 후 자동 검사:
 

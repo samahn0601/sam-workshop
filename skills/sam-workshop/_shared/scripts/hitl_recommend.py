@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 
 
 DIAL_NAMES = {
-    "H4": "8-gate hand-holding",
+    "H4": "10-gate hand-holding",
     "H3": "4-gate standard",
     "H2": "2-gate accelerated",
     "H1": "1-gate Auto-Pilot",
@@ -466,18 +466,17 @@ def render_self_deadline_checklist(profile: Dict[str, Any],
                                     events: List[Dict[str, Any]],
                                     floor_dial: Optional[str],
                                     fit_guard: Optional[Dict[str, Any]] = None) -> str:
-    """v1.3 — 워크숍 wrap에서 산출하는 5–7일 자가-마감 체크리스트.
+    """v1.3 — 워크숍 wrap(⑩)에서 산출하는 Human Final Gate 체크리스트.
+    (함수명·--self-deadline-out 플래그·self_deadline_checklist.md 파일명은 호환 위해 유지)
     `last_5min_checklist.py` 템플릿을 워크숍 의미로 재해석:
       - 본 파이프라인 last_5min: '제출 직전 5분 체크'
-      - 워크숍 self-deadline: '자가-마감 5–7일 동안 반드시 통과해야 할 항목'
+      - 워크숍 Human Final Gate: '제출 버튼을 누르기 전 본인이 반드시 통과시켜야 할 항목 (시점 아닌 책임 기준)'
     """
     import time
     paper_id = profile.get("paper_id", "unknown")
     article_type = profile.get("article_type", "unknown")
     target = profile.get("target_journal", "-")
     today = time.strftime("%Y-%m-%d")
-    deadline_start = "(워크숍 wrap +5일)"
-    deadline_end = "(워크숍 wrap +7일)"
 
     # open issues from events: gate_fail / hallucination still flagged
     open_issues = []
@@ -516,14 +515,13 @@ def render_self_deadline_checklist(profile: Dict[str, Any],
     else:
         open_block = "- (워크숍 wrap 시점에 추적된 미해결 이슈 없음)"
 
-    return f"""# 🗓️ 자가-마감 체크리스트 (Self-Deadline, 5–7일)
+    return f"""# 🔒 Human Final Gate 체크리스트
 
 **Generated:** {today} (워크숍 wrap)
 **Paper:** {paper_id} / {article_type} / {target}
-**자가-마감일:** {deadline_start} ~ {deadline_end}
 
 > **워크숍 산출물 = submission-directed ≠ submission-ready.**
-> 본 체크리스트는 워크숍 6시간 동안 통과한 항목을 5–7일 후 본인이 한 번 더 검증하도록 설계.
+> 워크숍 6시간 동안 통과한 항목을 제출 버튼을 누르기 전 본인이 최종 검증·승인한다. (시점 아닌 본인 책임 기준)
 {floor_banner}
 ---
 
@@ -534,18 +532,18 @@ def render_self_deadline_checklist(profile: Dict[str, Any],
 - [ ] IRB 진술 — 승인 기관, 일자, 환자동의 면제 사유 확인
 - [ ] Primary outcome 수치 정합 (Abstract = Results = Table) 본인 재확인
 
-## ① Reporting checklist 부착 (1–2일차)
+## ① Reporting checklist 부착
 
 - [ ] STROBE / CONSORT / CARE / PRISMA / STARD / TRIPOD PDF 첨부
 - [ ] Checklist의 모든 item이 manuscript에 어디 있는지 row 기재
 
-## ② AI Use Disclosure 정확성 (2일차)
+## ② AI Use Disclosure 정확성
 
 - [ ] 사용한 AI 모델명 (Claude / GPT / Gemini 등) 정확
 - [ ] 어느 단계에서 사용했는지 (draft / verify / critic / figure / 통계)
 - [ ] 본인이 검증한 항목 명시
 
-## ③ 결정적 검증 결과 재확인 (3–4일차)
+## ③ 결정적 검증 결과 재확인
 
 - [ ] G1 abstract word count: AST audit_meter ≤ 한도 ✓
 - [ ] G2 body word count: AST audit_meter ≤ 한도 ✓
@@ -553,13 +551,13 @@ def render_self_deadline_checklist(profile: Dict[str, Any],
 - [ ] R1 DOI / R2 metadata / R5 retracted 0건
 - [ ] R6 mortality/safety claim — 본인 abstract+full text 통과
 
-## ④ 통계 정합성 재확인 (4–5일차)
+## ④ 통계 정합성 재확인
 
 - [ ] Abstract 수치 = Results 수치 = Table 수치 (3-way agreement)
 - [ ] CI / p-value 표기 일관성
 - [ ] denominator / N 명시
 
-## ⑤ 투고 직전 (5–7일차)
+## ⑤ 투고 직전 (제출 전 최종)
 
 - [ ] 1차 저널 spec 최신 버전 재확인 (변경 가능성)
 - [ ] Cover letter — 본인 sender info / reviewer 추천 (있으면)
@@ -585,7 +583,7 @@ def main() -> None:
     ap.add_argument("--profile", type=Path, default=None)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--self-deadline-out", type=Path, default=None,
-                    help="v1.3: 워크숍 wrap 시 자가-마감 5–7일 체크리스트 출력 경로 "
+                    help="v1.3: 워크숍 wrap(⑩) 시 Human Final Gate 체크리스트 출력 경로 "
                          "(예: paper_home/08_package/self_deadline_checklist.md). "
                          "지정 안 하면 생성 안 함.")
     ap.add_argument("--shortlist", type=Path, default=None,
@@ -690,13 +688,13 @@ def main() -> None:
     print(f"[dial] floor={floor_dial or '-'} fit={fit_disp} "
           f"score={risk_score:.1f}/{score_dial} -> {recommended_dial} -> {args.out}")
 
-    # v1.3: self-deadline 5–7일 체크리스트 (--self-deadline-out 지정 시)
+    # v1.3: ⑩ Human Final Gate 체크리스트 (--self-deadline-out 지정 시; 플래그·파일명은 호환 위해 self_deadline_* 유지)
     if args.self_deadline_out:
         checklist = render_self_deadline_checklist(profile, metrics, events, floor_dial,
                                                    fit_guard=fit_guard)
         args.self_deadline_out.parent.mkdir(parents=True, exist_ok=True)
         args.self_deadline_out.write_text(checklist, encoding="utf-8")
-        print(f"[self-deadline] -> {args.self_deadline_out}")
+        print(f"[final-gate] -> {args.self_deadline_out}")
 
 
 if __name__ == "__main__":

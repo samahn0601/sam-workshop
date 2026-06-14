@@ -150,4 +150,4 @@ LLM 단독 메모리만으로 통과 금지.
 
 ## 다음 단계
 
-→ 강사 본 파이프라인(sam-ai-autopilot 16단계)의 ⑩ Final Verify에 해당하는 사후 정밀 감사 routine (참가자 8단계 체계 밖). Workshop에서는 verify-reference-essential 만으로 충분.
+→ 강사 본 파이프라인(sam-ai-autopilot 16단계)의 ⑩ Final Verify에 해당하는 사후 정밀 감사 routine (참가자 10단계 체계 밖). Workshop에서는 verify-reference-essential 만으로 충분.

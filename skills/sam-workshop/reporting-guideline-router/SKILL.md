@@ -126,4 +126,4 @@ description: >
 
 ## 다음 단계
 
-→ 본문 보강 → checklist PDF/파일 부착 → desk-reject-precheck (Step 7 quick scan) → Step 8 Wrap
+→ 본문 보강 → checklist PDF/파일 부착 → desk-reject-precheck (Step 7 quick scan) → Step 10 Wrap

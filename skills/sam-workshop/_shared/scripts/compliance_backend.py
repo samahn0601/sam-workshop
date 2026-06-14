@@ -20,7 +20,7 @@ Workshop integration:
 
 Design from 2026-05-03 3AI consult (workshop-port-strategy):
   - LLM is coach, AST is audit meter — never replace the LLM precheck wholesale.
-  - Pass / Fix before self-deadline / Human review (3-grade output).
+  - Pass / Fix before final gate / Human review (3-grade output).
   - Korean 어절 + Vancouver citations [1] mixed text supported.
 
 CLI:
@@ -87,10 +87,10 @@ class ValidationResult:
         if self.status == "skip":
             return "Workshop check passed"  # spec didn't require this
         if self.status == "warn":
-            return "Fix before self-deadline"
+            return "Fix before final gate"
         # fail
         if self.auto_fixable:
-            return "Fix before self-deadline"
+            return "Fix before final gate"
         return "Human review required"
 
 

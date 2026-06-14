@@ -26,7 +26,7 @@ PAPERS_DIR="${HOME}/papers"
 PAPER_HOME="${PAPERS_DIR}/${PAPER_NAME}"
 PLUGIN_BASE="${HOME}/.claude/plugins/sam-workshop"
 LEGACY_UMBRELLA="${HOME}/.claude/skills/sam-workshop"
-# v1.4: 평평(flat) 설치가 워크숍 표준 — 17 skill + _shared가 .claude/skills/ 바로 아래
+# v1.4: 평평(flat) 설치가 워크숍 표준 — 18 폴더(start-here + 작업 17) + _shared가 .claude/skills/ 바로 아래
 FLAT_PROJECT="${PWD}/.claude/skills"
 FLAT_GLOBAL="${HOME}/.claude/skills"
 
@@ -60,7 +60,7 @@ elif [[ -d "${PLUGIN_BASE}/skills/sam-workshop" ]]; then
 elif [[ -d "${LEGACY_UMBRELLA}" ]]; then
   SKILL_BASE="${LEGACY_UMBRELLA}"
   warn "Umbrella copy detected: ${LEGACY_UMBRELLA}"
-  warn "Desktop Code 탭은 이 깊이(2단계)를 탐지하지 못한다 — 안의 17개 skill 폴더와"
+  warn "Desktop Code 탭은 이 깊이(2단계)를 탐지하지 못한다 — 안의 18개 skill 폴더와"
   warn "_shared를 .claude/skills/ 바로 아래로 옮길 것 (INSTALL.md Fallback 참조)."
 else
   warn "skill pack이 아직 안 보인다 — paper_home은 계속 생성한다."

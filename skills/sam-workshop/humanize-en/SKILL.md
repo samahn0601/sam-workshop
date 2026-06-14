@@ -233,4 +233,4 @@ participants over 12 months. Final assessment was completed by 268 patients
 
 ## 다음 단계
 
-→ Step 4의 drift check 완료 → desk-reject-precheck (Step 7 quick scan) → Step 8 Wrap & Next
+→ Step 4의 drift check 완료 → desk-reject-precheck (Step 7 quick scan) → Step 10 Wrap & Next
