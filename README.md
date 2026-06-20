@@ -2,7 +2,7 @@
 
 > 작성: 2026-04-28 / 갱신: 2026-04-30 (v1.2 reference-run) / 2026-05-31 (6/20 운영 정본 정합)
 > 워크숍 일정: 2026-06-20 (토) **10:00–16:00** (+16:00–16:15 optional Q&A)
-> **5h 실습 + 1h 점심 일정.** 단독저자 모드. Deliverable: **논문 lifecycle 전체 한 바퀴**(작성 → submit 직전 제출 패키지 → 리뷰 대응 연습) + (선택) AI-assisted item bank + 17 skill 영구 설치
+> **5h 실습 + 1h 점심 일정.** 단독저자 모드. Deliverable: **논문 lifecycle 전체 한 바퀴**(작성 → submit 직전 제출 패키지 → 리뷰 대응 연습) + (선택) AI-assisted item bank + 18 skill 영구 설치
 > 타임라인 SSOT: [TIMETABLE.md](TIMETABLE.md) · 당일 운영: [D_DAY_RUNBOOK](D_DAY_RUNBOOK_20260620.md) / [BLUEPRINT](WORKSHOP_EXECUTION_BLUEPRINT_20260620.md)
 
 ## 현 상태 (D-20, 6/20 운영 정본 확정)
@@ -111,10 +111,10 @@ workshop/
 
 1. Code 탭 통합 터미널에서 paper_home 생성: `install/init-workshop-{mac.sh,windows.ps1}`
 2. Code 탭 **새 세션** → 작업 폴더 = paper_home
-3. 설치 발화 한 줄 붙여넣기: *"sam-workshop repo를 clone해서 skills/sam-workshop 안의 17개 skill 폴더와 `_shared`를 지금 작업 폴더의 `.claude/skills/` 바로 아래로 복사해줘 (우산 폴더 금지 — 1단계)"*
-4. **새 세션 1회** → `/` 목록에 17개 확인 → 첫 발화: `"내 논문 어느 저널에 투고할까?"`
+3. 설치 발화 한 줄 붙여넣기: *"sam-workshop repo를 clone해서 skills/sam-workshop 안의 18개 skill 폴더와 `_shared`를 지금 작업 폴더의 `.claude/skills/` 바로 아래로 복사해줘 (우산 폴더 금지 — 1단계)"*
+4. **새 세션 1회** → `/` 목록에 18개 확인 → 첫 발화: `"시작하자"` (또는 `"내 논문 어느 저널에 투고할까?"`)
 
-⚠️ Code 탭 skill 탐지는 `.claude/skills/<skill>/SKILL.md` **1단계만** 인식 — `cp -R skills/sam-workshop ~/.claude/skills/` 같은 **우산 복사는 17개 전부 미탐지**(실측). 반드시 평평하게.
+⚠️ Code 탭 skill 탐지는 `.claude/skills/<skill>/SKILL.md` **1단계만** 인식 — `cp -R skills/sam-workshop ~/.claude/skills/` 같은 **우산 복사는 전부 미탐지**(실측). 반드시 평평하게.
 
 자세한 설치/검증: `INSTALL.md`. Skill Pack 사용법: `skills/sam-workshop/README.md`.
 

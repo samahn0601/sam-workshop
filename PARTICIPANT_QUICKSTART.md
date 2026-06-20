@@ -1,103 +1,55 @@
-# Workshop Quickstart — 1-page (Claude Desktop **Code 탭**, 5분)
+# Workshop Quickstart — 설치 1장 (Claude Desktop **Code 탭**)
 
-> 이 문서가 그대로 워크숍 첫 슬라이드. 본인 OS 옆 명령어만 복붙. **주력 환경 = Code 탭** (Cowork/CLI 아님).
-
----
-
-## 사전 준비 (D-7 안내문에서 미리 안내)
-
-**모든 참가자**:
-- 학교 지원 Claude Pro/Max + **Claude Desktop 앱** 설치 (claude.ai)
-- Python 3.9+
-- **Windows 사용자: Git for Windows** (https://git-scm.com/downloads/win) — Code 탭 첫 실행 전제
-- (권장) Quarto (pandoc 자동 포함)
-
-**확인 1줄** (Code 탭 통합 터미널):
-```
-Mac/Linux:   python3 --version && git --version
-Windows:     python --version; git --version
-```
+> **최신·정본 안내(복사 버튼 포함): https://sam-workshop-landing.vercel.app**
+> 이 문서는 그 텍스트 요약본. **터미널 타이핑 없음** — 설치파일 더블클릭 + Code 탭에 붙여넣기.
 
 ---
 
-## 워크숍 당일 — 5단계 (~5분)
+## 먼저 — 계정 2개 (안내 메일, 미리 권장 · 안 했으면 당일도 OK)
 
-### ① Claude Desktop 앱 → **Code 탭** 열기
-로그인 후 상단 **Code** 탭. (Windows 첫 실행 시 Git 설치 안내 따르고 앱 재시작)
+1. **Claude 팀 플랜 'DCU Medicine RISE'** 가입 — https://claude.ai/join/org/aHKL8WbLw92x94OBr3a1PA
+   · **반드시 @cu.ac.kr 메일로 로그인** (프리미엄 팀 = Max급 시트, 6/11~7/10)
+2. **교직원포털 AI** 가입 (교차검증용) — blue.cu.ac.kr → 행정 › 정보처리서비스 › 생성형AI 서비스신청 → 'Super Agent'에서 모델 선택 (메일 첨부 매뉴얼)
 
-### ② paper_home 초기화 (Code 탭 통합 터미널)
+🔋 **준비물**: 개인 노트북 **배터리 완충 + 충전기 지참** · 구글 / @cu.ac.kr 계정.
 
-🍎 **Mac**
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/samahn0601/sam-workshop/main/install/init-workshop-mac.sh) my_paper_2026
+## STEP 1 · 지금 설치 (설치파일 더블클릭 · OT와 동시 진행)
+
+- **Claude Desktop 앱** — claude.ai/download → **@cu.ac.kr 계정(DCU Medicine RISE 팀)** 으로 로그인
+- **(Windows만) Git for Windows** — git-scm.com/downloads/win → 설치 후 앱 재시작
+  *(Windows에선 Code 탭 첫 실행 전제라 Code 탭에선 못 깖. Mac은 보통 이미 있음)*
+- **Python은 안 깔아도 됨** → STEP 2 발화 1이 자동 설치(관리자 권한 불필요)
+
+## STEP 2 · 설치되면 Code 탭에서 (보통 OT 중에 끝남)
+
+**① 작업 폴더** — Code 탭 → **폴더 선택** → 오늘 논문용 빈 폴더 하나
+
+**② 발화 1 (셋업)** — 입력창에 붙여넣기 (권한 물으면 승인만):
 ```
-🪟 **Windows (PowerShell)**
-```powershell
-irm https://raw.githubusercontent.com/samahn0601/sam-workshop/main/install/init-workshop-windows.ps1 | iex
-sam-init my_paper_2026
-```
-
-### ③ Code 탭 **새 세션** → 작업 폴더 = `~/papers/my_paper_2026`
-
-### ④ Skill 설치 — 아래 발화문 그대로 붙여넣기
-
-```
-https://github.com/samahn0601/sam-workshop 를 clone해서, 그 안의 skills/sam-workshop/ 폴더에 있는
-18개 skill 폴더(진입점 start-here + 작업 skill 17)와 _shared 폴더를 지금 작업 폴더의 .claude/skills/ 바로 아래로 복사해줘.
-(우산 폴더 sam-workshop을 만들지 말 것 — 1단계가 되도록.) git이 없으면
-ZIP https://github.com/samahn0601/sam-workshop/archive/refs/heads/main.zip 으로.
+지금 선택한 이 폴더를 제 논문 작업 폴더로 셋업해줘. 터미널 명령은 네가 실행하고, 권한 물으면 내가 승인할게.
+1) https://github.com/samahn0601/sam-workshop 를 clone하고, 그 안 skills/sam-workshop/ 의 18개 skill 폴더(진입점 start-here + 작업 skill 17)와 _shared 폴더를 이 폴더의 .claude/skills/ 바로 아래로 복사해줘. (우산 폴더 sam-workshop을 만들지 말 것 — .claude/skills/start-here 처럼 1단계가 되도록.)
+2) git이 없으면 ZIP https://github.com/samahn0601/sam-workshop/archive/refs/heads/main.zip 을 받아서 풀어 같은 위치에 넣어줘.
+3) python이 있는지 확인하고, 없으면 관리자 권한 없이(user 설치) 깔아줘 — Windows면 'winget --scope user' 또는 python.org 설치파일을 사용자 모드(PATH 추가)로, Mac이면 이미 있는 python3 사용. 그다음 'pip install --user python-docx'까지. 막히면 건너뛰고 무엇이 막혔는지 알려줘.
 끝나면 .claude/skills/ 바로 아래 폴더 목록을 보여줘.
 ```
+⚠️ **우산 폴더 금지** — `sam-workshop` 폴더째 넣으면 skill이 안 잡힘 (발화에 이미 반영됨).
 
-### ⑤ **새 세션 1회** → `/` 쳐서 18개 확인 → 첫 발화
+**③ 발화 2** — **새 세션**(설치한 세션엔 안 보임) → `/`로 **18개** 확인 → 입력:
 ```
-"시작하자"   (또는 "내 논문 어느 저널에 투고할까?")
+시작하자
 ```
-→ `start-here`가 10-step 맵·운전 모드 제시 → 각 단계를 안내(각 단계 끝에 **"다음"**으로 진행).
+→ `start-here`가 논문 10단계를 차례로 안내. 단계 끝마다 **"다음"**.
 
 ---
 
-## 슬라이드 인쇄용 요약 (4줄)
-
-```
-[터미널·Mac]  bash <(curl -fsSL .../init-workshop-mac.sh) my_paper_2026
-[터미널·Win]  irm .../init-workshop-windows.ps1 | iex; sam-init my_paper_2026
-[새 세션]     작업 폴더 = ~/papers/my_paper_2026
-[설치 발화]   "sam-workshop repo를 clone해서 18개 skill(start-here 포함)+_shared를 .claude/skills/ 바로 아래로" (우산 금지)
-[새 세션 후]  "/" 목록에 18개 확인 → "시작하자"
-```
-
----
-
-## 트러블 — facilitator에게 묻기 전에 1번만 시도
+## 막히면 — 손 들기 전에 1번만
 
 | 증상 | 1차 대응 |
 |---|---|
-| (Windows) Code 탭이 안 열림 | Git for Windows 설치 → 앱 완전 종료 후 재시작 |
-| `/` 목록에 skill이 안 보임 | **새 세션**(설치한 세션에선 안 보임) + `.claude/skills/journal-fit-check`가 **1단계**인지 확인(우산 폴더 금지) |
-| 설치 발화가 멈춤 | 인터넷 + github.com 접근 확인 → 발화문의 ZIP 폴백 사용 |
-| `sam-init` 못 찾음 (Windows) | PowerShell 새 창에서 `irm ... \| iex` 다시 |
-| "pandoc not found" | preflight가 알려줌 → "docx 패키징은 homework"로 진행 |
+| (Win) Code 탭이 안 열림 | Git for Windows 설치 → 앱 완전 종료 후 재시작 |
+| `/`에 skill이 안 보임 | **새 세션**인지 + `.claude/skills/start-here`가 1단계인지(우산 금지) |
+| 발화 1이 멈춤 | github.com 접근 확인 → 발화의 ZIP 폴백이 자동 시도 |
+| "권한 없음"으로 설치 실패 | 관리형 노트북 — 손 들기 (Git·Python 본체만 해당, 패키지는 영향 없음) |
+| "pandoc not found" | docx 변환은 나중으로 미루고 진행 (무시 OK) |
 
-해결 안 됨 → facilitator 호출. 워크숍은 다음 step으로 진행(멈추지 않음).
-
----
-
-## Fallback — 설치 발화 대신 터미널로 직접 복사
-
-⚠️ **우산 폴더 금지** — `skills/sam-workshop` 폴더째 복사하면 2단계가 되어 전부 미탐지(실측 확인). **내용물**을 `.claude/skills/` 바로 아래로:
-
-#### Mac
-```bash
-git clone https://github.com/samahn0601/sam-workshop.git
-mkdir -p ~/papers/my_paper_2026/.claude/skills
-cp -R sam-workshop/skills/sam-workshop/. ~/papers/my_paper_2026/.claude/skills/
-```
-#### Windows (PowerShell)
-```powershell
-git clone https://github.com/samahn0601/sam-workshop.git
-New-Item -ItemType Directory -Force "$env:USERPROFILE\papers\my_paper_2026\.claude\skills" | Out-Null
-Copy-Item -Recurse -Force sam-workshop\skills\sam-workshop\* "$env:USERPROFILE\papers\my_paper_2026\.claude\skills\"
-```
-
-복사 후 **새 세션**에서 `/` 목록 확인. (CLI·IDE 사용자만: `/plugin marketplace add samahn0601/sam-workshop` → `/plugin install sam-workshop@samahn0601` — Desktop Code 탭엔 `/plugin` 없음)
+해결 안 되면 손 들어 주세요 — 워크숍은 멈추지 않고 진행합니다. (정 안 되면 claude.ai 웹 + 옆자리 pairing)

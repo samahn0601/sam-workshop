@@ -18,8 +18,9 @@ Workshop integration (v1.3):
     (kept off the 17-skill mental model).
   - Output: `paper_home/08_package/manuscript_full.docx` automatically
     generated from `paper_home/04_draft/manuscript.md`.
-  - On failure (pandoc missing, etc): facilitator notifies participant that
-    docx packaging is left as homework. Workshop flow continues.
+  - pandoc missing/failing is NO LONGER blocking: auto-falls back to a
+    pandoc-free python-docx converter (lower fidelity, works everywhere).
+    Only if python-docx is ALSO missing does it stop (pip install python-docx).
 
 Usage:
     # Facilitator-run from workshop wrap step:
@@ -37,9 +38,11 @@ Programmatic:
     )
 
 Dependencies:
-  - pandoc (Quarto bundle preferred on Windows). Install via
-    https://quarto.org/docs/get-started/.
-  - python-docx (`pip install python-docx`)
+  - python-docx (`pip install python-docx`) — REQUIRED (also powers the
+    pandoc-free fallback converter).
+  - pandoc — OPTIONAL but preferred for fidelity (tables, complex markdown).
+    Quarto bundle preferred on Windows: https://quarto.org/docs/get-started/.
+    If absent, the python-docx fallback runs automatically.
 """
 from __future__ import annotations
 
@@ -150,6 +153,117 @@ def _apply_typography(docx_path: Path, *,
     doc.save(str(docx_path))
 
 
+def _md_to_docx_python(md_path: Path, docx_path: Path) -> None:
+    """Pandoc-free fallback: Markdown -> .docx using python-docx only.
+
+    Handles headings, paragraphs, bold/italic/inline-code, bullet & numbered
+    lists, fenced code blocks, and simple pipe tables. Lower fidelity than
+    pandoc, but needs NO system binary so nobody is blocked when pandoc is
+    absent. python-docx is the only requirement."""
+    import re
+    try:
+        from docx import Document
+    except ImportError:
+        raise FacilitatorActionRequired(
+            "python-docx not installed. Run `pip install python-docx`. "
+            "(pandoc-free fallback still needs python-docx.)")
+
+    inline = re.compile(r"(\*\*.+?\*\*|\*[^*]+?\*|_[^_]+?_|`[^`]+?`)")
+
+    def add_inline(paragraph, text: str) -> None:
+        for part in inline.split(text):
+            if not part:
+                continue
+            if part.startswith("**") and part.endswith("**"):
+                paragraph.add_run(part[2:-2]).bold = True
+            elif (part.startswith("*") and part.endswith("*")) or \
+                 (part.startswith("_") and part.endswith("_")):
+                paragraph.add_run(part[1:-1]).italic = True
+            elif part.startswith("`") and part.endswith("`"):
+                paragraph.add_run(part[1:-1]).font.name = "Consolas"
+            else:
+                paragraph.add_run(part)
+
+    def cells(row: str):
+        return [c.strip() for c in row.strip().strip("|").split("|")]
+
+    lines = md_path.read_text(encoding="utf-8").splitlines()
+    doc = Document()
+    i, n = 0, len(lines)
+    while i < n:
+        raw = lines[i]
+        s = raw.strip()
+
+        # fenced code block
+        if s.startswith("```"):
+            i += 1
+            buf = []
+            while i < n and not lines[i].strip().startswith("```"):
+                buf.append(lines[i]); i += 1
+            i += 1  # skip closing fence
+            doc.add_paragraph().add_run("\n".join(buf)).font.name = "Consolas"
+            continue
+
+        # pipe table (header row + |---| separator row)
+        if s.startswith("|") and i + 1 < n and "-" in lines[i + 1] and \
+           re.match(r"^\s*\|?[\s:\-|]+\|?\s*$", lines[i + 1]):
+            header = cells(raw)
+            ncol = len(header)
+            i += 2  # skip header + separator
+            body = []
+            while i < n and lines[i].strip().startswith("|"):
+                body.append(cells(lines[i])); i += 1
+            table = doc.add_table(rows=1, cols=ncol)
+            try:
+                table.style = "Table Grid"
+            except Exception:
+                pass
+            for j, h in enumerate(header):
+                cell_p = table.rows[0].cells[j].paragraphs[0]
+                add_inline(cell_p, h)
+                for r in cell_p.runs:
+                    r.bold = True
+            for brow in body:
+                rc = table.add_row().cells
+                for j in range(ncol):
+                    add_inline(rc[j].paragraphs[0], brow[j] if j < len(brow) else "")
+            doc.add_paragraph()  # spacer
+            continue
+
+        # heading
+        m = re.match(r"^(#{1,6})\s+(.*)$", s)
+        if m:
+            doc.add_heading(m.group(2).strip(), level=min(len(m.group(1)), 4))
+            i += 1
+            continue
+
+        # bullet / numbered list (flat)
+        if re.match(r"^[-*+]\s+", s):
+            add_inline(doc.add_paragraph(style="List Bullet"), re.sub(r"^[-*+]\s+", "", s))
+            i += 1
+            continue
+        if re.match(r"^\d+\.\s+", s):
+            add_inline(doc.add_paragraph(style="List Number"), re.sub(r"^\d+\.\s+", "", s))
+            i += 1
+            continue
+
+        # blank line
+        if not s:
+            i += 1
+            continue
+
+        # paragraph (merge soft-wrapped lines until blank/special)
+        buf = [s]
+        i += 1
+        while i < n and lines[i].strip() and \
+                not re.match(r"^(#{1,6}\s|[-*+]\s|\d+\.\s|\|)", lines[i].strip()) and \
+                not lines[i].strip().startswith("```"):
+            buf.append(lines[i].strip()); i += 1
+        add_inline(doc.add_paragraph(), " ".join(buf))
+
+    doc.save(str(docx_path))
+
+
 def regenerate_docx_from_md(*,
                               md_path: Path | str,
                               docx_path: Path | str,
@@ -175,8 +289,9 @@ def regenerate_docx_from_md(*,
 
     Raises:
         FileNotFoundError if md_path doesn't exist.
-        FacilitatorActionRequired if pandoc/python-docx unavailable —
-            facilitator should switch to homework fallback.
+        FacilitatorActionRequired only if python-docx is unavailable
+            (pandoc absence/failure auto-falls back to the python-docx
+            converter — no longer blocking).
     """
     md_p = Path(md_path)
     docx_p = Path(docx_path)
@@ -184,8 +299,15 @@ def regenerate_docx_from_md(*,
         raise FileNotFoundError(f"markdown source not found: {md_p}")
 
     docx_p.parent.mkdir(parents=True, exist_ok=True)
-    _run_pandoc(md_p, docx_p,
-                reference_doc=Path(reference_doc) if reference_doc else None)
+    try:
+        _run_pandoc(md_p, docx_p,
+                    reference_doc=Path(reference_doc) if reference_doc else None)
+    except FacilitatorActionRequired as e:
+        # pandoc missing or failed -> pandoc-free fallback (python-docx only).
+        # No system binary needed; lower fidelity but nobody gets blocked.
+        print(f"[md_to_docx] pandoc unavailable ({str(e).splitlines()[0]}); "
+              "falling back to python-docx converter.", file=sys.stderr)
+        _md_to_docx_python(md_p, docx_p)
     _apply_typography(docx_p,
                        font=font,
                        size_pt=size_pt,

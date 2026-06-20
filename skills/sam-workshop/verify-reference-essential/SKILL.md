@@ -48,6 +48,8 @@ description: >
 
 기본 `workshop-mini`.
 
+> **워크숍 20명 단체 운영(3AI 합의)**: 동시 라이브 호출은 NCBI 무키 **3 req/s(공유 IP)** 에 막힌다 → **강사 데모(사전 산출물 활용·라이브 1~2개) + 참가자 본인 초안 ref 1~3개 가벼운 실행 + 429 시 Degraded Mode(수동 top-5)**. NCBI API 키 전원 발급은 **비권장**(가입 마찰 + 같은 NAT에서 키별 독립 할당 보장 불확실). 운영 대본: `FACILITATOR_SCRIPTS.md` "참조검증 단체 실습 운영".
+
 ## 입력
 
 - `paper_home/04_draft/manuscript.md` — **workshop-mini는 `.md` 우선.** `.docx`만 있으면 먼저 `.md`로 변환(Claude가 수행, 원본 `.docx`는 읽기 전용 보존) 후 실행 — 변환 실패 시 R3·R6는 `INCOMPLETE`

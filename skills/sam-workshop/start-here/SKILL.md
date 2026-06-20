@@ -87,7 +87,7 @@ description: >
 | Step | 단계 skill / 도구 | 정차 |
 |---|---|---|
 | ① Idea Lock | journal-fit-check | ✋ Self-Gate A |
-| ② Deep Research | reporting-guideline-router (+ Chat Deep Research) | 진행 |
+| ② Deep Research | **Chat Research 핸드오프**(↓ 아래 절 — 필수) + reporting-guideline-router | 진행 |
 | ③ Story & Outline | evidence-harvest-claim-bank → story-design | 진행 |
 | ④ Draft | (Code 파일 에디터) + section-boundary | 진행 |
 | ⑤ Verify | verify-reference-essential + stats-consistency | ✋ Self-Gate B |
@@ -99,6 +99,25 @@ description: >
 
 \* ⑦의 AI 공개문·cover letter는 표준 정차는 아니지만 **Publication Ethics floor**로 어떤 모드든 저자가 확인한다.
 (+ Bonus 병행: **exam-item-builder** = 점심 백그라운드 + Bonus 트랙)
+
+### ② Deep Research — Chat Research 핸드오프 (필수 · 빠뜨리면 안 됨)
+
+딥리서치를 *실행*하는 별도 skill은 없다. start-here가 Step 2에 진입하면 **아래 핸드오프를 반드시 출력**한다. 이걸 빠뜨리면 `02_research/deep_research.md`가 비어, 다음 단계 `evidence-harvest-claim-bank`가 **LLM 메모리 인용(= 날조 참고문헌·desk reject)**으로 빠진다.
+
+**start-here가 Step 2에서 출력할 안내(그대로):**
+> **② Deep Research — 문헌은 'Research'로 직접 수집합니다.**
+> 1. Claude **Chat 탭**으로 전환(앱 상단 클릭) → **Research(연구) 기능 켜기**.
+> 2. 검색 프롬프트:
+> ```
+> [내 연구질문]의 핵심 문헌을 찾아줘. 출처마다 저자·연도·저널·DOI(또는 PMID)·핵심 결과(가능하면 원문 1줄 인용)·한계를 정리하고, 최신 가이드라인·체계적 고찰·반박 근거도 포함해줘. 확인 가능한 인용만 — 출처 없는 일반론은 제외.
+> ```
+> (범위가 넓으면 주제·PICO별로 2~3회 나눠 Research)
+> 3. 결과를 복사 → Code 탭 작업 폴더의 **`02_research/deep_research.md`** 에 저장.
+> 4. Code 탭으로 돌아와 **"다음"** → `evidence-harvest-claim-bank`가 claim/source bank로 구조화.
+
+- ⚠️ **Research는 Chat 전용 기능 — Code 탭엔 없음.** 이 단계만 잠깐 Chat에 다녀온다(앱에서 클릭 한 번).
+- Research 미가용(플랜/환경)이면: Code 탭 web search 또는 본인 보유 PDF로 대체하되, **모든 인용은 Step 5 `verify-reference-essential`로 실재 확인**(메모리 인용 금지).
+- 같은 단계에서 **`reporting-guideline-router`**로 연구설계에 맞는 보고지침(CONSORT/STROBE/PRISMA 등)을 라우팅한다.
 
 ### 4) 안전선 (운전 모드와 무관하게 강제)
 - 🔒 **Medical Safety** — 약물 용량·상호작용, IRB·윤리·환자동의, 임상 가이드라인 변경, R6(mortality/safety/guideline claim) → 강제 정차.
