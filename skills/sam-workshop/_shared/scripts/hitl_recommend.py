@@ -384,10 +384,21 @@ def render_report(profile: Dict[str, Any], metrics: Dict[str, Any],
                   guardrail_min: Optional[str], rationale: List[str],
                   floor_dial: Optional[str] = None,
                   fit: Optional[Dict[str, Any]] = None,
-                  fit_guard: Optional[Dict[str, Any]] = None) -> str:
+                  fit_guard: Optional[Dict[str, Any]] = None,
+                  input_incomplete: bool = False) -> str:
     lines = [
         "# 🩺 HITL Dial 처방전 (Lab Report)",
         "",
+    ]
+    if input_incomplete:
+        # fail-closed: 입력이 비면 정상 처방처럼 보이게 두지 않는다 (SKILL.md)
+        lines += [
+            "> ⚠️ **INPUT_INCOMPLETE** — 입력 불완전 (events.jsonl 비어 있음 또는 "
+            "paper_profile.json 없음).",
+            "> 아래는 **보수 권고(신뢰 낮음)** 이며 정상 처방이 아니다. 입력을 채운 뒤 재실행할 것.",
+            "",
+        ]
+    lines += [
         f"- 환자 (paper_id): {profile.get('paper_id', 'unknown')}",
         f"- Article type: {profile.get('article_type', 'unknown')}",
         f"- Target journal: {profile.get('target_journal', '-')}",
@@ -679,9 +690,13 @@ def main() -> None:
     if not rationale:
         rationale.append("이벤트 부족 — 더 많은 데이터 누적 후 재계산 권고")
 
+    # fail-closed 입력 완전성: events가 비었거나 profile이 없으면 INPUT_INCOMPLETE
+    # 배너 (SKILL.md hitl-dial-recommender). 정상 처방처럼 보이게 두지 않는다.
+    input_incomplete = (metrics["n_events"] == 0) or (not profile)
     report = render_report(profile, metrics, risk_score, recommended_dial,
                             guardrail_min, rationale, floor_dial=floor_dial,
-                            fit=fit, fit_guard=fit_guard)
+                            fit=fit, fit_guard=fit_guard,
+                            input_incomplete=input_incomplete)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(report, encoding="utf-8")
     fit_disp = fit.get("verdict") or fit.get("status")

@@ -125,9 +125,25 @@ def main() -> None:
     severity = "high" if any(i.startswith(("[N_ABS", "[N_VAR", "[P_ABS")) for i in issues) else \
                ("medium" if issues else "info")
 
+    # Distinguish "checked & consistent" from "skipped (nothing to cross-check)".
+    # With no abstract/tables there is NO cross-source comparison, so 0 issues
+    # must not read as a consistency pass — fail-open honesty for the reader.
+    comparison_sources = [name for name, t in
+                          (("abstract", abstract_text), ("tables", tables_text))
+                          if t.strip()]
+    if issues:
+        check_status = severity              # high / medium
+    elif comparison_sources:
+        check_status = "checked_clean"       # compared, no inconsistency found
+    else:
+        check_status = "skipped_no_input"    # nothing to cross-check
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
     lines = ["# Statistics Consistency Check", ""]
     lines.append(f"- Severity: **{severity}**")
+    src_note = (f" (cross-checked vs {', '.join(comparison_sources)})"
+                if comparison_sources else " (no abstract/tables supplied)")
+    lines.append(f"- Check status: **{check_status}**{src_note}")
     lines.append(f"- Issues found: {len(issues)}")
     lines.append("")
     lines.append("## Extracted numbers (raw)")
@@ -141,8 +157,12 @@ def main() -> None:
     if issues:
         for i in issues:
             lines.append(f"- {i}")
-    else:
+    elif comparison_sources:
         lines.append("- None detected (regex level only — Claude semantic review still recommended)")
+    else:
+        lines.append("- SKIPPED — abstract/tables 미제공으로 교차 비교를 수행하지 않음. "
+                     "이것은 '이상 없음(consistency pass)'이 아니라 '점검 안 함(입력 부족)'이다. "
+                     "abstract/tables를 함께 주고 재실행할 것.")
     lines.append("")
     lines.append("## Caveats")
     lines.append("- Regex-only extraction. False positives expected when subgroup n differs from total n by design.")
@@ -163,7 +183,7 @@ def main() -> None:
         "engine": "code-script",
         "category": "stats_consistency",
         "severity": 5 if severity == "high" else (3 if severity == "medium" else 1),
-        "description": f"{len(issues)} stats issues, severity={severity}",
+        "description": f"{len(issues)} stats issues, severity={severity}, status={check_status}",
     }
     with (hitl_dir / "events.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(event, ensure_ascii=False) + "\n")

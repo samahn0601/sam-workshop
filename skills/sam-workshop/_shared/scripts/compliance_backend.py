@@ -119,8 +119,22 @@ def _skip(name: str, msg: str = "") -> ValidationResult:
 # 1. Patterns (Vancouver citations, markdown links, URLs, emails)
 # ============================================================
 
-# Vancouver-style numeric inline citations: [1], [1,2], [1-3], [1, 2, 3]
-_VANCOUVER_CITE_PAT = re.compile(r"\[\s*\d+(?:\s*[\-,]\s*\d+)*\s*\]")
+# Vancouver-style numeric inline citations: [1], [1,2], [1-3], [1, 2, 3].
+# The range separator accepts ASCII hyphen plus en-dash (–, U+2013) and
+# em-dash (—, U+2014) — common when text is pasted from Word/PDF. Dashes are
+# normalized to hyphen before range expansion (see citation_reference_integrity).
+_VANCOUVER_CITE_PAT = re.compile(r"\[\s*\d+(?:\s*[\-–—,]\s*\d+)*\s*\]")
+
+# Range-separator dashes that must be treated like an ASCII hyphen when
+# expanding a bracketed citation range such as [1–3] / [1—3].
+_RANGE_DASHES = ("–", "—")  # en-dash, em-dash
+
+
+def _normalize_range_dashes(token: str) -> str:
+    """Replace en-/em-dash with ASCII hyphen so `[start–end]` range logic works."""
+    for d in _RANGE_DASHES:
+        token = token.replace(d, "-")
+    return token
 
 # Markdown links: count by label only, drop the URL
 _MD_LINK_PAT = re.compile(r"\[([^\]]+)\]\([^\)]+\)")
@@ -462,7 +476,8 @@ def citation_reference_integrity(body_text: str, refs_text: str) -> ValidationRe
     """
     cited: set[int] = set()
     for m in _VANCOUVER_CITE_PAT.finditer(body_text):
-        token = m.group(0).strip("[]").replace(" ", "")
+        token = _normalize_range_dashes(
+            m.group(0).strip("[]").replace(" ", ""))
         for chunk in token.split(","):
             if "-" in chunk:
                 a, b = chunk.split("-", 1)

@@ -73,7 +73,10 @@ description: >
 - **Aims & Scope 적합 논증** — 공식 Aims & Scope 1줄 요약 + "이 원고가 이 저널 독자에게 주는 새 가치" 1문장 (공식 페이지 미확인 시 `잠정` 표기)
 - **유사 논문 실증** — 최근 1–2년 이 저널에 비슷한 유형·주제 논문 1–2편 (제목 수준; 기억/빠른 확인 한도, 못 찾으면 `Step 2에서 확인` 표기 — 못 찾는 것 자체가 red flag 신호)
 - **Desk-reject red flag 1개** — "에디터가 이 원고를 거절한다면 그 사유는?" (악마의 변호인)
-- **Fit verdict** — `Strong` / `Possible` / `Risky`
+- **Fit verdict** — `Strong` / `Possible` / `Risky` / `Mismatch`
+  - `Strong`·`Possible` = 투고 후보 유지
+  - `Risky` = scope 의문 — 투고 전 Step 1(Scope-Fit) 재정의 권고. 실제 투고 목표이면 hitl-dial-recommender가 **최소 H3 + 투고 보류(C/D gate 필수)** 가드레일 발동
+  - `Mismatch` = outside scope 확정 — **가장 강한 가드레일: do-not-submit.** 저널 교체 또는 Step 1 전면 재정의 전 투고 금지 (Risky와 동일 경로로 최소 H3 발동, 강도는 최상). JAMIA #19 desk-reject(2026-05-11) 재발 방지선
 
 **필수 ② — 조건:**
 - **저널명 (full + abbreviation)**
@@ -148,6 +151,8 @@ description: >
 | 2차 | ... |
 | 3차 | ... |
 ```
+
+> **Fit verdict 값(4종):** `Strong` / `Possible` / `Risky` / `Mismatch`. `Risky`·`Mismatch`는 실제 투고 목표 시 hitl-dial-recommender 하드 가드레일(최소 H3 + 투고 금지)을 발동한다 — `Mismatch`가 가장 강한 do-not-submit 신호(outside scope 확정). verdict 칸이 비었거나 `잠정`이면 미확인으로 간주되어 동일 가드레일이 걸린다.
 
 ## HITL Event Emit
 

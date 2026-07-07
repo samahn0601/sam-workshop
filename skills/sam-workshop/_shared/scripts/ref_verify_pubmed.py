@@ -288,13 +288,19 @@ def parse_pubmed_article(art: ET.Element) -> Dict[str, Any]:
 # R3: Ghost / Orphan
 # ============================================================
 
-INTEXT_CITE_RE = re.compile(r"\[(\d+(?:\s*[-,]\s*\d+)*)\]")
+# Range separator accepts ASCII hyphen plus en-dash (–, U+2013) / em-dash
+# (—, U+2014), common when [1–3] is pasted from Word/PDF. Dashes are normalized
+# to ASCII hyphen before range expansion below (keeps ASCII behavior identical).
+INTEXT_CITE_RE = re.compile(r"\[(\d+(?:\s*[-–—,]\s*\d+)*)\]")
+_RANGE_DASHES = ("–", "—")  # en-dash, em-dash
 
 
 def find_intext_refs(manuscript: str) -> set:
     cited: set = set()
     for m in INTEXT_CITE_RE.finditer(manuscript):
         chunk = m.group(1)
+        for d in _RANGE_DASHES:
+            chunk = chunk.replace(d, "-")
         for part in re.split(r"\s*,\s*", chunk):
             if "-" in part:
                 a, b = part.split("-", 1)
@@ -528,14 +534,37 @@ def verify_reference(ref: Reference, email: str,
         issues.append("[META_JOURNAL_MISMATCH]")
 
     res.issues = issues
-    # severity
+    # Severity mapping. Two independent signals feed the certificate:
+    #   - severity=="high"  → certificate FAIL (real manuscript / retraction finding)
+    #   - INCOMPLETE_CHECK_MARKERS ([R5B_UNCHECKED]/[EXCEPTION]) → certificate
+    #     INCOMPLETE_EXTERNAL_CHECK (fail-closed; see count_incomplete_checks +
+    #     write_certificate). An unresolved external check is NOT a clean run: it
+    #     is kept at >= medium here so it stays visible in refcheck_issues.md and
+    #     can never be silently downgraded to a PASSing certificate.
     if any(s.startswith(("[RETRACTED]", "[RETRACTED_CROSSREF]", "[CHIMERA_HIGH]", "[GHOST]", "[DOI_NOT_RESOLVED]")) for s in issues):
         res.severity = "high"
     elif issues:
+        # includes [R5B_UNCHECKED]/[EXCEPTION] — never "info" while unresolved
         res.severity = "medium"
     else:
         res.severity = "info"
     return res
+
+
+# Markers meaning an external check could NOT be completed (network/API outage,
+# rate-limit, per-reference exception) — as opposed to a manuscript defect.
+# Fail-closed: their presence forbids a PASS certificate; Status becomes
+# INCOMPLETE_EXTERNAL_CHECK (SKILL.md Degraded Mode). Distinct from FAIL, which
+# is reserved for real high-severity findings.
+INCOMPLETE_CHECK_MARKERS = ("[R5B_UNCHECKED]", "[EXCEPTION]")
+
+
+def count_incomplete_checks(results: List[CheckResult]) -> int:
+    """Number of references whose external verification is unresolved."""
+    return sum(
+        1 for r in results
+        if any(iss.startswith(INCOMPLETE_CHECK_MARKERS) for iss in r.issues)
+    )
 
 
 # ============================================================
@@ -672,8 +701,20 @@ def write_issues_md(results: List[CheckResult], path: Path) -> None:
 
 
 def write_certificate(results: List[CheckResult], n_high: int, n_med: int,
-                      r6_count: int, path: Path) -> None:
-    pass_status = "PASS" if n_high == 0 else "FAIL"
+                      r6_count: int, path: Path, n_incomplete: int = 0) -> None:
+    # Status precedence (fail-closed, SKILL.md Degraded Mode):
+    #   1) real high-severity findings         → FAIL
+    #   2) any unresolved external check        → INCOMPLETE_EXTERNAL_CHECK
+    #      (network/API outage is NOT a manuscript error, so it is neither PASS
+    #       nor FAIL — it is recorded distinctly; PASS is forbidden)
+    #   3) fully checked & clean                → PASS
+    # A run with [R5B_UNCHECKED]/partial outage can therefore never report PASS.
+    if n_high > 0:
+        pass_status = "FAIL"
+    elif n_incomplete > 0:
+        pass_status = "INCOMPLETE_EXTERNAL_CHECK"
+    else:
+        pass_status = "PASS"
     lines = [
         "# Verification Certificate (R1-R5 + R6 prep)",
         "",
@@ -681,12 +722,22 @@ def write_certificate(results: List[CheckResult], n_high: int, n_med: int,
         f"- Total references checked: {len(results)}",
         f"- High severity issues: {n_high}",
         f"- Medium severity issues: {n_med}",
+        f"- Incomplete external checks: {n_incomplete} "
+        f"(network/API 미완 — PASS 집계 금지)",
         f"- R6 paraphrase claims sampled: {r6_count} (Claude semantic check pending)",
         "",
         "## Required next step",
         "1. R1-R5 high severity 항목을 본인 결정 (수정/교체/제거)",
         "2. R6 `r6_claim_support.jsonl`을 Claude로 semantic check (지원/부분지원/미지원/모순/판단불가)",
         "3. Self-Gate B (verify) 통과 결정",
+    ]
+    if n_incomplete > 0:
+        lines.append(
+            "4. ⚠️ 외부 검증 미완(INCOMPLETE_EXTERNAL_CHECK): 네트워크 회복 후 동일 "
+            "명령 재실행 후 재판정 — 미완 상태로는 Self-Gate B 통과 금지 "
+            "(SKILL.md Degraded Mode)."
+        )
+    lines += [
         "",
         "→ Mortality/safety/guideline claim은 abstract만으로 통과 금지. full text 확인 필수.",
     ]
@@ -739,6 +790,7 @@ def main() -> None:
 
     n_high = sum(1 for r in results if r.severity == "high")
     n_med = sum(1 for r in results if r.severity == "medium")
+    n_incomplete = count_incomplete_checks(results)
 
     # R6 prep
     r6_claims = find_high_risk_claims(manuscript, refs_by_id, args.r6_sample)
@@ -750,7 +802,8 @@ def main() -> None:
     write_csv(results, args.out / "refcheck_refs.csv")
     write_issues_md(results, args.out / "refcheck_issues.md")
     write_certificate(results, n_high, n_med, len(r6_claims),
-                      args.out / "verification_certificate.md")
+                      args.out / "verification_certificate.md",
+                      n_incomplete=n_incomplete)
 
     # HITL emit
     hitl_dir = args.out.parent / ".sam" / "hitl"
@@ -760,17 +813,22 @@ def main() -> None:
         "paper_id": args.out.parent.name,
         "step": 5,
         "gate": "C_verify_critic",
-        "event_type": "gate_pass" if n_high == 0 else "gate_fail",
+        # fail-closed: an incomplete external check is not a gate_pass
+        "event_type": "gate_pass" if (n_high == 0 and n_incomplete == 0) else "gate_fail",
         "skill": "verify-reference-essential",
         "engine": "code-script+pubmed",
         "category": "reference_integrity",
-        "severity": 5 if n_high > 0 else 1,
-        "description": f"R1-R5: {n_high} high, {n_med} medium. R6 prepped {len(r6_claims)} samples.",
+        "severity": 5 if n_high > 0 else (3 if n_incomplete > 0 else 1),
+        "description": (
+            f"R1-R5: {n_high} high, {n_med} medium, {n_incomplete} incomplete. "
+            f"R6 prepped {len(r6_claims)} samples."
+        ),
     }
     with (hitl_dir / "events.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
-    print(f"\n[done] high={n_high} medium={n_med} r6_samples={len(r6_claims)}")
+    print(f"\n[done] high={n_high} medium={n_med} incomplete={n_incomplete} "
+          f"r6_samples={len(r6_claims)}")
     print(f"  -> {args.out}/refcheck_refs.csv")
     print(f"  -> {args.out}/refcheck_issues.md")
     print(f"  -> {args.out}/r6_claim_support.jsonl  (Claude semantic check 대기)")
