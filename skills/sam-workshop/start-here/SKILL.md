@@ -116,6 +116,7 @@ description: >
 > 4. Code 탭으로 돌아와 **"다음"** → `evidence-harvest-claim-bank`가 claim/source bank로 구조화.
 
 - ⚠️ **Research는 Chat 전용 기능 — Code 탭엔 없음.** 이 단계만 잠깐 Chat에 다녀온다(앱에서 클릭 한 번).
+- 🔵 **(선택) ChatGPT 구독자 — ChatGPT '심층 리서치(Deep Research)' 병행 가능.** 위 2번 프롬프트를 브라우저 ChatGPT의 Deep Research로도 돌려 결과를 같은 `02_research/deep_research.md`에 합칠 수 있다(Claude Research와 병행하면 문헌 커버리지↑·상호 교차확인 — 엔진이 서로 놓친 문헌을 메움). 어느 도구로 모았든 **모든 인용은 Step 5 `verify-reference-essential`로 실재 확인**(메모리·환각 인용 금지). GPT는 선택이며 Claude Research만으로도 이 단계는 완결된다.
 - Research 미가용(플랜/환경)이면: Code 탭 web search 또는 본인 보유 PDF로 대체하되, **모든 인용은 Step 5 `verify-reference-essential`로 실재 확인**(메모리 인용 금지).
 - 같은 단계에서 **`reporting-guideline-router`**로 연구설계에 맞는 보고지침(CONSORT/STROBE/PRISMA 등)을 라우팅한다.
 

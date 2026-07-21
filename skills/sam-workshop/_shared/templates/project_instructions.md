@@ -34,8 +34,19 @@ Step 1 (Idea) → Step 10 (Wrap & Next)까지 한 바퀴(작성 ①~⑦ + 투고
 - Pipeline의 10 step을 따라가며 작성 Self-Gate A/B/C/D(①⑤⑥⑦)에서 본인이 검토 (운전모드 정차는 ①⑤⑥⑩ — 아래 HITL Gate Plan)
 - 자연어 요청만으로 `sam-workshop/*` skill이 자동 발화됨
 - 결정적 검증(DOI, PMID, retraction)은 LLM이 아닌 script로 수행
-- 외부 GPT-5.5 critic은 Step 6에서 선택적으로 활용 (무료 티어 OK)
+- 외부 LLM critic은 Step 6에서 선택적으로 활용 — 학교 멀티LLM 포털·브라우저 ChatGPT·Codex OAuth 모두 가능(아래 "선택: GPT 활용" 절)
 - Figure는 GPT-image-2와 Nano Banana 2를 **병렬**로 시도
+
+## 선택: GPT 활용 (ChatGPT 구독자 · adjunct)
+
+기본은 Claude 단독으로 완결된다(Team 시트만으로 충분·별도 API 키 불요). **ChatGPT(Plus/Pro) 구독이 있는 저자**는 아래를 *선택적으로* 곁들일 수 있다(없어도 무방):
+
+- **② 문헌 검색 — ChatGPT '심층 리서치(Deep Research)'** 를 Claude Research와 병행. 서로 다른 엔진이 놓친 문헌을 메워 커버리지↑. 결과는 `02_research/deep_research.md`에 합치고, **모든 인용은 Step 5에서 실재 확인**(엔진 무관·메모리 인용 금지).
+- **⑥ Critic — GPT '제2 관점'** 을 Claude 멀티페르소나에 독립 심사자 1인으로 추가(학교 포털이 없거나 크레딧이 소진돼도 가능). 불일치 지적일수록 가치가 크다. 상세는 `critic-multi-persona`의 Phase 2.
+- **연결 방법** — (간단) 브라우저 ChatGPT에 붙여넣기 / (무과금) Code 탭에서 Codex OAuth로 Claude가 GPT를 직접 호출(ChatGPT 구독 쿼터 사용·별도 API 과금 없음). 환경에 따라 codex 설정이 필요하면 '간단' 경로로 대체.
+- **computer use(에이전트) — 탐색적 여지.** ChatGPT의 에이전트/브라우징 기능으로 저널 투고규정·보고지침 페이지 확인 등을 보조할 수 있다. 단 🔒 **포털 로그인·개인정보 입력·실제 제출은 안전선상 사람이 직접**(⑧⑨ floor 유지) — 자동화에 위임하지 않는다.
+
+> GPT/Gemini 등 어떤 외부 도구를 쓰든 **인용 검증·연구윤리·최종 책임은 저자**이며, AI 활용 공개문에 사용한 도구를 사실대로 밝힌다(Claude 단독이면 그대로, GPT 병행 시 GPT도 명시).
 
 ## HITL Gate Plan (운전 모드)
 

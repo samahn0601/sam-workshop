@@ -204,7 +204,9 @@ def r1_doi_resolve(doi: str) -> Tuple[bool, Dict[str, Any]]:
 # R2: PubMed metadata via esummary (and abstract via efetch for R6 prep)
 # ============================================================
 
-def pubmed_search(term: str, email: str, retmax: int = 3) -> List[str]:
+def pubmed_search(term: str, email: str, retmax: int = 3) -> Optional[List[str]]:
+    """esearch. [] = searched, no match. None = search itself failed
+    (network/API) — callers must record [EXCEPTION], never treat as no-match."""
     url = (
         f"{NCBI_EUTILS}/esearch.fcgi?db=pubmed&retmode=json"
         f"&retmax={retmax}&tool={TOOL_NAME}&email={urllib.parse.quote(email)}"
@@ -215,7 +217,19 @@ def pubmed_search(term: str, email: str, retmax: int = 3) -> List[str]:
         data = json.loads(body)
         return data.get("esearchresult", {}).get("idlist", []) or []
     except Exception:
-        return []
+        return None
+
+
+def extract_title_segment(raw_text: str) -> Optional[str]:
+    """Vancouver 'Authors. Title. Journal. …' → best-effort title segment.
+    The first sentence-ender-delimited segment is authors; the second is
+    usually the title — a far better [Title] query than the raw head (which
+    mixes author names in and matches nothing). Splits on . ? ! so titles
+    ending in a question mark don't swallow the journal name."""
+    segs = [s.strip() for s in re.split(r"(?<=[.?!])\s+", raw_text) if s.strip()]
+    if len(segs) >= 2 and len(segs[1].split()) >= 3:
+        return segs[1].rstrip(".?!")
+    return None
 
 
 def pubmed_efetch_xml(pmids: List[str], email: str) -> Optional[ET.Element]:
@@ -454,15 +468,43 @@ def verify_reference(ref: Reference, email: str,
         # Try DOI -> PMID
         ids = pubmed_search(f"{ref.doi}[AID]", email, retmax=1)
         time.sleep(RATE_LIMIT_SLEEP)
-        if ids:
+        if ids is None:
+            issues.append("[EXCEPTION] pubmed esearch failed (DOI->PMID lookup)")
+        elif ids:
             pmid_used = ids[0]
     if not pmid_used and ref.year:
-        # fallback: try title-like first ~12 words from raw + year
+        # fallback queries, best first: title segment (Vancouver 2nd segment),
+        # then legacy raw-head 12 words (kept for non-Vancouver formats)
+        queries = []
+        title_seg = extract_title_segment(ref.raw_text)
+        if title_seg:
+            # unquoted + punctuation-stripped: PubMed's quoted phrase search
+            # misses titles absent from its phrase index (live-verified), while
+            # unquoted [Title] term mapping finds them.
+            clean = " ".join(re.sub(r"[^\w\s-]", " ", title_seg).split())
+            if clean:
+                queries.append(f'{clean}[Title] AND {ref.year}[PDAT]')
         first_words = " ".join(ref.raw_text.split()[:12])
-        ids = pubmed_search(f'"{first_words}"[Title] AND {ref.year}[PDAT]', email, retmax=1)
-        time.sleep(RATE_LIMIT_SLEEP)
-        if ids:
-            pmid_used = ids[0]
+        queries.append(f'"{first_words}"[Title] AND {ref.year}[PDAT]')
+        for q in queries:
+            ids = pubmed_search(q, email, retmax=1)
+            time.sleep(RATE_LIMIT_SLEEP)
+            if ids is None:
+                issues.append("[EXCEPTION] pubmed esearch failed (title fallback)")
+                break
+            if ids:
+                pmid_used = ids[0]
+                break
+
+    # Fail-closed: a reference with no DOI, no PMID, and no PubMed match has
+    # had ZERO external verification — it must never count as a clean pass.
+    # (Ghost/AI-fabricated refs typically arrive exactly in this shape.)
+    if (not ref.doi and not pmid_used
+            and not any(i.startswith("[EXCEPTION]") for i in issues)):
+        issues.append(
+            "[UNVERIFIED_NO_MATCH] no DOI/PMID and no PubMed match — "
+            "existence unverified (human check required; 단행본·지침·비-PubMed "
+            "출처면 원문으로 직접 확인)")
 
     if pmid_used:
         res.pmid = pmid_used
@@ -556,7 +598,10 @@ def verify_reference(ref: Reference, email: str,
 # Fail-closed: their presence forbids a PASS certificate; Status becomes
 # INCOMPLETE_EXTERNAL_CHECK (SKILL.md Degraded Mode). Distinct from FAIL, which
 # is reserved for real high-severity findings.
-INCOMPLETE_CHECK_MARKERS = ("[R5B_UNCHECKED]", "[EXCEPTION]")
+# [UNVERIFIED_NO_MATCH] (2026-07-21): a no-DOI/no-PMID reference with zero
+# PubMed hits received no external verification at all — treating it as clean
+# was the fail-open path AI-fabricated references walked through.
+INCOMPLETE_CHECK_MARKERS = ("[R5B_UNCHECKED]", "[EXCEPTION]", "[UNVERIFIED_NO_MATCH]")
 
 
 def count_incomplete_checks(results: List[CheckResult]) -> int:

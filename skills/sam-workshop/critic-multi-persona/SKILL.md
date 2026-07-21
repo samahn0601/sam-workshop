@@ -103,7 +103,7 @@ Top 3 strategic comment + accept_likelihood (low/medium/high) + 사유.
 
 ### Phase 2 (10분) — 외부 LLM critic (선택)
 
-외부 LLM 웹챗(학교 멀티LLM 포털 등 가용한 것)에서 실행. **기본 1개 모델**, 시간·크레딧 여유 시에만 2개 모델 비교(포털의 동시 비교는 모델 수만큼 크레딧 소모). 업로드 전 확인: 원고에 환자 식별정보 없음 + (실제 투고 원고면) 외부 업로드에 대한 저널 정책. 다음 프롬프트 발사:
+외부 LLM 웹챗(학교 멀티LLM 포털, 또는 개인 ChatGPT — 아래 경로)에서 실행. **기본 1개 모델**, 시간·크레딧 여유 시에만 2개 모델 비교(포털의 동시 비교는 모델 수만큼 크레딧 소모). 업로드 전 확인: 원고에 환자 식별정보 없음 + (실제 투고 원고면) 외부 업로드에 대한 저널 정책. 다음 프롬프트 발사:
 
 ```
 You are a senior reviewer for a medical journal. Read the attached manuscript
@@ -119,6 +119,12 @@ Be terse. No prose. Bullet form.
 ```
 
 → 결과 복붙 → `paper_home/06_critic/external_critic.md` (legacy `gpt55_critic.md`가 있으면 AC가 함께 읽음)
+
+**개인 ChatGPT 구독자 경로 (포털 대신/병행 · 선택):**
+- **간단(권장)** — 위 프롬프트 + 원고(또는 `claude_personas.md` 요지 + 핵심 쟁점)를 브라우저 ChatGPT에 붙여넣기. 설정 불요, 구독만 있으면 됨.
+- **무과금 연결(Codex OAuth)** — Code 탭에서 Claude에게 *"codex로 GPT에게 이 원고 비평을 받아줘"* 로 지시(ChatGPT 구독 쿼터 사용 · 별도 `OPENAI_API_KEY` 과금 없음). ⚠️ 환경에 따라 codex 설정이 필요할 수 있고, 안 되면 위 '간단' 경로로 대체 — 결과 가치는 동일하다.
+
+GPT 산출은 Area Chair(Phase 3)에 또 하나의 **독립 origin(`GPT`)** 으로 넣는다(페르소나 1인처럼 취급). Claude 페르소나와 **불일치하는 지적일수록 가치가 크다** — 단일 모델 동조 위험 상쇄가 외부 critic을 더하는 유일한 이유다. GPT 출력도 미검증 인용·주장을 담을 수 있으므로 Step 5 검증 원칙이 그대로 적용된다.
 
 (외부 LLM 사용 불가 시 — 포털 미접속·크레딧 소진 등 → Phase 3에서 Claude 4번째 페르소나 "External Skeptic"로 대체)
 
